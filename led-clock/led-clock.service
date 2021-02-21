@@ -1,0 +1,15 @@
+[Unit]
+Description=Led display worker
+After=network.target
+StartLimitInterval=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStart=/usr/bin/python3 -B -u /opt/src/station/led-clock/led-clock.py --light-adjust=0
+WorkingDirectory=/opt/src/station/led-clock
+
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+#arduino - historical name
+Description=Arduino bluetooth exporter
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 -B -u /opt/src/station/telemetry/exporter.py
+WorkingDirectory=/opt/src/station/telemetry
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
