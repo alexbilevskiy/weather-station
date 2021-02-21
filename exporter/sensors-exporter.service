@@ -1,13 +1,14 @@
 [Unit]
 #arduino - historical name
+#install - `sudo ln -s /opt/src/station/exporter/sensors-exporter.service /etc/systemd/system/sensors-exporter.service`
 Description=Arduino bluetooth exporter
 After=network.target
 
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/bin/python3 -B -u /opt/src/station/telemetry/exporter.py
-WorkingDirectory=/opt/src/station/telemetry
+ExecStart=/usr/bin/python3 -B -u /opt/src/station/exporter/exporter.py
+WorkingDirectory=/opt/src/station/exporter
 StandardOutput=journal
 
 [Install]
