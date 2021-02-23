@@ -58,7 +58,7 @@ for m in help:
 
 for deviceId in metrics['devices']:
     for devField in metrics['devices'][deviceId]:
-        if devField == 'update':
+        if devField == 'update' or devField == 'action':
             continue
         metricname = 'st_' + devField
         metricVal = metrics['devices'][deviceId][devField]
