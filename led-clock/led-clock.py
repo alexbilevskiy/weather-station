@@ -371,13 +371,13 @@ class RunText:
             except:
                 metrics['yandex']['radar']['strength'] = 'avg'
             if metrics['yandex']['radar']['strength'] == 'avg':
-                strength = 0.5
-            else:
                 strength = 1
+            else:
+                strength = 2
         else:
             strength = metrics['yandex']['radar']['current']['prec_strength']
 
-        maxFlakes = int(30 * strength)
+        maxFlakes = int(self.ledH * strength)
         minX = 0
         delay = 0.1
         if metrics['yandex']['radar']['current']['prec_type'] == 0:
