@@ -351,9 +351,9 @@ class RunText:
         #cur = ss * metrics['ya_current']['day_length']
 
     def drawPrecip(self, metrics):
-        # metrics['yandex']['radar']['current']['prec_type'] = 1
-        # metrics['yandex']['radar']['current']['prec_strength'] = 1
-        # metrics['yandex']['fact']['wind_speed'] = 5
+        # metrics['yandex']['radar']['current']['prec_type'] = 2
+        # metrics['yandex']['radar']['strength'] = 'avg'
+        # metrics['yandex']['fact']['wind_speed'] = 2
 
         try:
             metrics['yandex']['radar']['current']['prec_type']
@@ -371,41 +371,45 @@ class RunText:
             except:
                 metrics['yandex']['radar']['strength'] = 'avg'
             if metrics['yandex']['radar']['strength'] == 'avg':
-                strength = 1
+                strength = 0.25
             else:
-                strength = 2
+                strength = 1
         else:
             strength = metrics['yandex']['radar']['current']['prec_strength']
 
         maxFlakes = int(self.ledH * strength)
         minX = 0
-        delay = 0.1
-        if metrics['yandex']['radar']['current']['prec_type'] == 0:
+        speed = 10 # pixels per second
+        if metrics['yandex']['radar']['current']['prec_type'] == 0: # no precipitation
             self.delay = 0.05
             return
-        elif metrics['yandex']['radar']['current']['prec_type'] == 1:
-            self.delay = 0.01
-            delay = 0.01
-        elif metrics['yandex']['radar']['current']['prec_type'] == 2:
-            minX = 0 - self.ledH * 2
-            self.delay = 0.04
-            delay = 0.01
-        elif metrics['yandex']['radar']['current']['prec_type'] == 3:
-            self.delay = 0.05
-            delay = 0.1
+        elif metrics['yandex']['radar']['current']['prec_type'] == 1: # rain
+            # self.delay = 0.01
+            speed = 30
+        elif metrics['yandex']['radar']['current']['prec_type'] == 2: # rain + snow
+            # self.delay = 0.04
+            speed = 15
+        elif metrics['yandex']['radar']['current']['prec_type'] == 3: # snow
+            # self.delay = 0.05
+            speed = 6
+        self.delay = 0
 
-        now = time.time()
+        delay = 1 / speed
+        interval = self.ledH / (maxFlakes * speed)
 
-        if (len(self.snow) < maxFlakes) and (now - self.snowTimer >= self.ledH * delay / maxFlakes):
+        nowMicro = datetime.datetime.now().timestamp()
+        if (len(self.snow) < maxFlakes) and (nowMicro - self.snowTimer > interval):
             startY = 0
             self.snow.append({'x': random.randint(minX, self.ledW - 1), 'y': startY, 'timer': time.time(), 'color': self.getColorByPrec(metrics['yandex']['radar']['current']['prec_type'])})
-            self.snowTimer = now
+            self.snowTimer = nowMicro
 
         for i, f in enumerate(self.snow):
             self.canvas.SetPixel(f['x'], f['y'], f['color'][0], f['color'][1], f['color'][2])
-            if now - self.snow[i]['timer'] < delay:
+            if nowMicro - self.snow[i]['timer'] < delay:
                 continue
-            self.snow[i]['timer'] = now
+            # realSpeed = 1 / (nowMicro - self.snow[i]['timer'])
+            # print('real speed: ' + str(realSpeed))
+            self.snow[i]['timer'] = nowMicro
 
             if metrics['yandex']['radar']['current']['prec_type'] == 1:
                 self.snow[i]['color'] = self.getColorByPrec(1)
