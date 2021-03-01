@@ -20,7 +20,7 @@ systemd unit for exporter
 - [`led-clock/led-clock.service`](led-clock/led-clock.service)  
   systemd unit for clock
 - [`exporter/metrics.py`](exporter/metrics.py)  
-cgi script to export metrics in prometheus format
+cgi script to export metrics in prometheus format ([example](metrics_example.txt))
 
 - [`exporter/metrics_raw.py`](exporter/metrics_raw.py)  
 cgi script to show raw metrics
