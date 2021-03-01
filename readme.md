@@ -14,8 +14,9 @@
   * aggregates data from custom esp8266+mqtt sensors and zigbee sensors via zigbee2mqtt 
 * **Prometheus exporter**
   * \<grafana screenshot here>
+  
 
- 
+[**Project structure**](contents.md)
 *** 
 **Big thanks to**:
 * https://github.com/hzeller/rpi-rgb-led-matrix

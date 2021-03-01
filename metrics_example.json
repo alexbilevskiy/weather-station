@@ -1,0 +1,210 @@
+{
+  "custom": {
+    "datetime": "2021-03-01 16:20:48",
+    "utime": 1614604848,
+    "traf_from": 757.036476790905,
+    "traf_to": 879.455818861723,
+    "traf_updated": 1614604772,
+    "day_length": 38520.0,
+    "day_percent": 0.8411214953271028
+  },
+  "sensors": {
+    "t_in": 24.1,
+    "t_out": 2.6,
+    "h_in": 33.6,
+    "h_out": 99.9,
+    "light": 303,
+    "light_updated": 1614604847,
+    "pr_mBar": 997.9,
+    "pr_mmHg": null,
+    "pr_temp": 20.3,
+    "co2_ppm": 735.2,
+    "co2_temp": null,
+    "uptime_01": 29690,
+    "uptime_02": 44988,
+    "esp01_fail": 0,
+    "esp01_updated": 1614604847,
+    "esp02_fail": 0,
+    "esp02_updated": 1614604847,
+    "size": 50,
+    "lag": 102,
+    "co2_s1": 0,
+    "co2_s2": 0,
+    "co2_s3": 1,
+    "co2_abc": 180
+  },
+  "devices": {
+    "ESP_air": {
+      "temperature": 24.1,
+      "humidity": 33.6,
+      "co2": 735.2,
+      "uptime": 44988,
+      "updated": 1614604847,
+      "state": 1
+    },
+    "ESP_weather": {
+      "temperature": 2.6,
+      "humidity": 99.9,
+      "pressure": 997.9,
+      "pressure_temp": 20.3,
+      "uptime": 29690,
+      "updated": 1614604847,
+      "state": 1
+    },
+    "0x086bd7fffe2fa5cc": {
+      "brightness": 254,
+      "linkquality": 89,
+      "state": 0,
+      "update": {
+        "state": "available"
+      },
+      "updated": 1614587992
+    },
+    "ceiling_lamp": {
+      "brightness": 254,
+      "state": 0,
+      "updated": 1614574834
+    },
+    "0x086bd7fffe2556de": {
+      "brightness": 254,
+      "linkquality": 76,
+      "state": 0,
+      "update": {
+        "state": "available"
+      },
+      "updated": 1614574833
+    },
+    "0x086bd7fffe039ad9": {
+      "brightness": 254,
+      "linkquality": 76,
+      "state": 0,
+      "update": {
+        "state": "available"
+      },
+      "updated": 1614574834
+    },
+    "0x000b3cfffeff1915": {
+      "brightness": 254,
+      "linkquality": 76,
+      "state": 0,
+      "update": {
+        "state": "available"
+      },
+      "updated": 1614599315
+    },
+    "0x00158d0005866d7e": {
+      "battery": 100,
+      "humidity": 53.52,
+      "linkquality": 84,
+      "pressure": 997,
+      "temperature": 6.32,
+      "voltage": 3005,
+      "updated": 1614604291
+    },
+    "0x04cf8cdf3c76563c": {
+      "linkquality": 113,
+      "power": 0,
+      "state": 0,
+      "updated": 1614604775
+    },
+    "0x00158d00066f9242": {
+      "battery": 100,
+      "linkquality": 97,
+      "voltage": 3065,
+      "updated": 1614603237
+    },
+    "0x5c0272fffe856c6c": {
+      "battery": 94,
+      "linkquality": 89,
+      "voltage": 2900,
+      "updated": 1614591181
+    }
+  },
+  "yandex": {
+    "fact": {
+      "obs_time": 1614603600,
+      "temp": 3,
+      "feels_like": -2,
+      "icon": "bkn_d",
+      "condition": "cloudy",
+      "wind_speed": 4.2,
+      "wind_dir": "sw",
+      "pressure_mm": 752,
+      "pressure_pa": 1002,
+      "humidity": 81,
+      "daytime": "d",
+      "polar": false,
+      "season": "spring",
+      "wind_gust": 7.8
+    },
+    "radar": {
+      "type": "noprec",
+      "strength": false,
+      "isNoPrec": true,
+      "isNoRule": false,
+      "isNoData": false,
+      "current": {
+        "icon": "bkn_d",
+        "prec_type": 0,
+        "prec_strength": 0,
+        "condition": "cloudy",
+        "cloudness": 0.5
+      },
+      "time": 1614611400,
+      "state": "noprec",
+      "title": "\u0412 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0438\u0435 2 \u0447\u0430\u0441\u0430 \u043e\u0441\u0430\u0434\u043a\u043e\u0432 \u043d\u0435\u00a0\u043e\u0436\u0438\u0434\u0430\u0435\u0442\u0441\u044f"
+    },
+    "forecast": {
+      "date": "2021-03-01",
+      "date_ts": 1614546000,
+      "week": 9,
+      "sunrise": "07:20",
+      "sunset": "18:02",
+      "moon_code": 1,
+      "moon_text": "decreasing-moon",
+      "parts": [
+        {
+          "part_name": "evening",
+          "temp_min": 2,
+          "temp_avg": 2,
+          "temp_max": 3,
+          "wind_speed": 5.9,
+          "wind_gust": 11.4,
+          "wind_dir": "sw",
+          "pressure_mm": 749,
+          "pressure_pa": 998,
+          "humidity": 87,
+          "prec_mm": 0,
+          "prec_prob": 0,
+          "prec_period": 360,
+          "icon": "ovc",
+          "condition": "overcast",
+          "feels_like": -4,
+          "daytime": "n",
+          "polar": false
+        },
+        {
+          "part_name": "night",
+          "temp_min": 2,
+          "temp_avg": 2,
+          "temp_max": 2,
+          "wind_speed": 5.7,
+          "wind_gust": 11.3,
+          "wind_dir": "w",
+          "pressure_mm": 745,
+          "pressure_pa": 993,
+          "humidity": 89,
+          "prec_mm": 0,
+          "prec_prob": 0,
+          "prec_period": 360,
+          "icon": "ovc",
+          "condition": "overcast",
+          "feels_like": -4,
+          "daytime": "n",
+          "polar": false
+        }
+      ]
+    },
+    "updated": 1614604247
+  }
+}
