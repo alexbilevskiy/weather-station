@@ -1,4 +1,4 @@
-##Project structure
+## Project structure
 
 **Main scripts**
 - [`exporter/exporter.py`](exporter/exporter.py)  
