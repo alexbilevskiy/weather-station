@@ -317,9 +317,9 @@ class exporter:
             except Exception as e:
                 print('yandex current error: `{0}`'.format(str(e)))
                 return self.metrics
-        if 'alert' not in cur or 'current' not in cur['alert']:
-            print('yandex radar bad response: ' + str(resp.text.encode('utf-8')))
-            return self.metrics
+            if not cur or 'alert' not in cur or 'current' not in cur['alert']:
+                print('yandex radar bad response: ' + str(resp.text.encode('utf-8')))
+                return self.metrics
         self.metrics['yandex']['radar'] = cur['alert']
 
         sr = datetime.datetime.strptime(w['forecast']['sunrise'], '%H:%M')
