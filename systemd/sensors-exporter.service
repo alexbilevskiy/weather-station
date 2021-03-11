@@ -1,6 +1,6 @@
 [Unit]
 #arduino - historical name
-#install - `sudo ln -s /opt/src/station/exporter/sensors-exporter.service /etc/systemd/system/sensors-exporter.service`
+#install - `sudo ln -s /opt/src/station/systemd/sensors-exporter.service /etc/systemd/system/sensors-exporter.service`
 Description=Arduino bluetooth exporter
 After=network.target
 StartLimitInterval=0

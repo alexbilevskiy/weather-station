@@ -1,5 +1,5 @@
 [Unit]
-#install: `sudo ln -s /opt/src/station/led-clock/led-clock.service /etc/systemd/system/led-clock.service`
+#install: `sudo ln -s /opt/src/station/systemd/led-clock.service /etc/systemd/system/led-clock.service`
 Description=Led display worker
 After=network.target
 StartLimitInterval=0

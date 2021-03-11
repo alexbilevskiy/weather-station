@@ -1,5 +1,5 @@
 [Unit]
-#install - `sudo ln -s /opt/src/station/exporter/zigbee-listener.service /etc/systemd/system/zigbee-listener.service`
+#install - `sudo ln -s /opt/src/station/systemd/zigbee-listener.service /etc/systemd/system/zigbee-listener.service`
 Description=Zigbee listener
 After=network.target
 StartLimitInterval=0
