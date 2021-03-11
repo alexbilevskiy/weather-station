@@ -1,0 +1,14 @@
+[Unit]
+#install - `sudo ln -s /opt/src/station/systemd/helper-grafana.service /etc/systemd/system/helper-grafana.service`
+Description=grafana Helper Simple Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=-/bin/mkdir /var/log/grafana
+ExecStart=/bin/chown grafana:grafana /var/log/grafana
+Restart=on-abort
+
+
+[Install]
+WantedBy=multi-user.target
