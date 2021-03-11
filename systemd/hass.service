@@ -1,0 +1,17 @@
+[Unit]
+#install - `sudo ln -s /opt/src/station/systemd/hass.service /etc/systemd/system/hass.service`
+Description=Home Asssistant core
+After=network.target
+StartLimitInterval=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStart=/opt/homeassistant2/bin/hass -c "/home/pi/.homeassistant"
+WorkingDirectory=/home/pi/.homeassistant
+StandardOutput=journal
+User=pi
+
+[Install]
+WantedBy=multi-user.target
