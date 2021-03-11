@@ -29,7 +29,7 @@ class listener():
         client.publish('zigbee2mqtt/bridge/config/devices/get')
 
     def on_message(self, client, userdata, msg):
-        if msg.payload == '' or msg.payload is None:
+        if msg.payload == '' or msg.payload is None or msg.payload == b'':
             print('empty payload for ' + str(msg.topic))
             return
         if msg.topic == 'zigbee2mqtt/bridge/log' or msg.topic == 'zigbee2mqtt/bridge/logging' or msg.topic == 'zigbee2mqtt/bridge/groups':
