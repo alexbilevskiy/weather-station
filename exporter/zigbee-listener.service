@@ -1,0 +1,16 @@
+[Unit]
+#install - `sudo ln -s /opt/src/station/exporter/zigbee-listener.service /etc/systemd/system/zigbee-listener.service`
+Description=Zigbee listener
+After=network.target
+StartLimitInterval=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStart=/usr/bin/python3 -B -u /opt/src/station/exporter/zigbee-listener.py
+WorkingDirectory=/opt/src/station/exporter
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target

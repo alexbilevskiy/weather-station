@@ -30,11 +30,14 @@ class listener():
     def on_message(self, client, userdata, msg):
         dev = re.match('zigbee2mqtt/(0x\w+)', msg.topic)
         pl = {}
-        if msg.payload != '':
-            pl = json.loads(msg.payload)
-        if msg.topic == 'zigbee2mqtt/bridge/log':
+        if msg.payload == '' or msg.payload is None:
+            print('empty payload for ' + str(msg.topic))
             return
-        elif msg.topic == 'zigbee2mqtt/bridge/config/devices':
+        if msg.topic == 'zigbee2mqtt/bridge/log' or msg.topic == 'zigbee2mqtt/bridge/logging':
+            return
+
+        pl = json.loads(msg.payload)
+        if msg.topic == 'zigbee2mqtt/bridge/config/devices':
             print('devices: ' + str(msg.payload))
             for d in pl:
                 if(d['friendly_name'] == 'Coordinator'):
@@ -43,7 +46,8 @@ class listener():
                 print('query dev ' + d['friendly_name'])
                 client.publish('zigbee2mqtt/{0}/get'.format(d['friendly_name']), '{"state":""}')
             self.mc.set('zigbee-devices', json.dumps(self.devices), 86400)
-        elif dev:
+            return
+        if dev:
             id = dev.group(1)
             if not 'state' in pl or pl['state'] == '':
                 return
@@ -51,8 +55,9 @@ class listener():
             self.devices = json.loads(self.mc.get('zigbee-devices'))
             self.devices[id]['state'] = pl
             self.mc.set('zigbee-devices', json.dumps(self.devices), 86400)
-        else:
-            print('unknown topic ' + msg.topic + " " + str(msg.payload))
+
+            return
+        print('unknown topic ' + msg.topic + " " + str(msg.payload))
     
     def run(self):
         self.client.connect("localhost", 1883, 60)
