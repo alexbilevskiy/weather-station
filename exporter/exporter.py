@@ -345,6 +345,7 @@ class exporter:
                 pass
 
         try:
+            data.pop('update')
             data.pop('update_available')
         except:
             pass
