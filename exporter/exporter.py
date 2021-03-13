@@ -337,10 +337,13 @@ class exporter:
         return self.metrics
 
     def readZigbee(self, topic, data):
-        try:
-            data['state'] = 1 if data['state'] == 'ON' else 0
-        except:
-            pass
+        stateFields = ['state', 'state_left', 'state_right']
+        for f in stateFields:
+            try:
+                data[f] = self.convertState(data[f])
+            except:
+                pass
+
         try:
             data.pop('update_available')
         except:
@@ -348,6 +351,10 @@ class exporter:
         self.metrics['devices'][topic] = data
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
+    def convertState(self, value):
+        if value == 'ON':
+            return 1
+        return 0
 
     def mqtt_connect(self):
         print("Connecting mqtt")
