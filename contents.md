@@ -15,10 +15,6 @@ Daemon for LED clock (reads data from memcached `metrics`)
 
 
 **Tools**
-- [`exporter/sensors-exporter.service`](exporter/sensors-exporter.service)  
-systemd unit for exporter
-- [`led-clock/led-clock.service`](led-clock/led-clock.service)  
-  systemd unit for clock
 - [`exporter/metrics.py`](exporter/metrics.py)  
 cgi script to export metrics in prometheus format ([example](metrics_example.txt))
 
@@ -36,3 +32,9 @@ Just rectangle
 
 - [`led-clock/snake.py`](led-clock/snake.py)  
 Snake, controllable via raw tcp socket
+
+**systemd units**
+(`systemd` directory)
+- units for led clock, exporter
+- units for hass, zigbee2mqtt, mosquitto, grafana, etc (though they do not belong here)
+- where is prometheus, you may ask? 

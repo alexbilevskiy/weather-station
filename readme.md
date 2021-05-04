@@ -25,6 +25,8 @@
 **External tools**
 * memcached
 * mosquitto
-
+* home assistant
+* grafana
+* prometheus
 
 

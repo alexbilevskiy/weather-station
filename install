@@ -1,5 +1,3 @@
-sudo ln -s /opt/src/station/led-clock/led-clock.service /etc/systemd/system/led-clock.service
-sudo ln -s /opt/src/station/exporter/sensors-exporter.service /etc/systemd/system/sensors-exporter.service
 sudo ln -s /opt/src/station/exporter/metrics.py /var/www/html/metrics
 sudo chmod 777 /var/www/html/metrics
 sudo ln -s /opt/src/station/exporter/metrics_raw.py /var/www/html/metrics_raw.py
@@ -7,3 +5,10 @@ sudo chmod 777 /var/www/html/metrics_raw.py
 
 sudo ln -s /opt/src/station/exporter/zigbee.py /var/www/html/zigbee.py
 sudo ln -s /opt/src/station/exporter/zigbee-get.py /var/www/html/zigbee-get.py
+
+
+sudo ln -s /opt/src/station/systemd/led-clock.service /etc/systemd/system/led-clock.service
+sudo ln -s /opt/src/station/systemd/sensors-exporter.service /etc/systemd/system/sensors-exporter.service
+
+sudo ln -s /opt/src/station/systemd/hass.service /etc/systemd/system/hass.service
+# ... mosquitto, grafana etc
