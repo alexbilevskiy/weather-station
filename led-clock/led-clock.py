@@ -415,7 +415,7 @@ class RunText:
                 self.snow[i]['color'] = self.getColorByPrec(1)
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += 0
-                self.snow[i]['x'] += random.randint(0, int(metrics['yandex']['fact']['wind_speed']/4))
+                self.snow[i]['x'] += int(metrics['yandex']['fact']['wind_speed']/4)
             elif metrics['yandex']['radar']['current']['prec_type'] == 2:
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += random.randint(0, int(metrics['yandex']['fact']['wind_speed']/3))
