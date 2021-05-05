@@ -91,11 +91,6 @@ class exporter:
             time.sleep(0.5)
 
     def readEsp01(self, esp_data):
-        if not esp_data:
-            print('Not receiving ' + str(esp_data))
-            self.metrics['sensors']['esp01_fail'] = 1
-            self.metrics['devices']['ESP_weather']['state'] = 0
-            return False
         temp = {
             't_out': {'v': 0, 't': 'float'},
             'h_out': {'v': 0, 't': 'float'},
@@ -131,23 +126,9 @@ class exporter:
         self.metrics['sensors']['uptime_01'] = uptime
 
         self.metrics['sensors']['esp01_fail'] = 0
-        self.metrics['devices']['ESP_weather'] = {
-            'temperature': self.metrics['sensors']['t_out'],
-            'humidity': self.metrics['sensors']['h_out'],
-            'pressure': self.metrics['sensors']['pr_mBar'],
-            'pressure_temp': self.metrics['sensors']['pr_temp'],
-            'uptime': self.metrics['sensors']['uptime_01'],
-            'updated': self.metrics['custom']['utime'],
-            'state': 1
-        }
         return self.metrics
 
     def readEsp02(self, esp_data):
-        if not esp_data:
-            print('Not receiving2 ' + esp_data)
-            self.metrics['sensors']['esp02_fail'] = 1
-            self.metrics['devices']['ESP_air']['state'] = 0
-            return False
         temp = {
             't_in': {'v': 0, 't': 'float'},
             'h_in': {'v': 0, 't': 'float'},
@@ -184,14 +165,6 @@ class exporter:
         self.metrics['sensors']['esp02_updated'] = self.metrics['custom']['utime']
         self.metrics['sensors']['uptime_02'] = uptime
         self.metrics['sensors']['esp02_fail'] = 0
-        self.metrics['devices']['ESP_air'] = {
-            'temperature': self.metrics['sensors']['t_in'],
-            'humidity': self.metrics['sensors']['h_in'],
-            'co2': self.metrics['sensors']['co2_ppm'],
-            'uptime': self.metrics['sensors']['uptime_02'],
-            'updated': self.metrics['custom']['utime'],
-            'state': 1
-        }
         return self.metrics
 
     def normalize(self, name, val, paramType ='float'):
@@ -375,23 +348,19 @@ class exporter:
         print("Disconnected with result code " + str(rc))
         self.mqtt_connect()
 
-
     def mqtt_message(self, client, userdata, msg):
-        m = re.match('.*?wifi2mqtt/ESP_air$', msg.topic)
+        m = re.match('.*?wifi2mqtt/(\w+)$', msg.topic)
         if m:
-            #print('MQTT OK: ' + "\t" + str(msg.topic))
             data = json.loads(msg.payload)
-            self.readEsp02(data)
+            self.readZigbee(m.group(1), data)
+            if m.group(1) == 'ESP_air':
+                self.readEsp02(data)
+            elif m.group(1) == 'ESP_weather':
+                self.readEsp01(data)
             return
-        m = re.match('.*?wifi2mqtt/ESP_weather$', msg.topic)
-        if m:
-            #print('MQTT OK: ' + "\t" + str(msg.topic))
-            data = json.loads(msg.payload)
-            self.readEsp01(data)
-            return
+
         m = re.match('.*?zigbee2mqtt/(\w+)$', msg.topic)
         if m:
-            #print('MQTT OK: ' + "\t" + str(msg.topic))
             data = json.loads(msg.payload)
             self.readZigbee(m.group(1), data)
             return
