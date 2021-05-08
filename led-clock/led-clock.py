@@ -371,7 +371,7 @@ class RunText:
             except:
                 metrics['yandex']['radar']['strength'] = 'avg'
             if metrics['yandex']['radar']['strength'] == 'avg':
-                strength = 0.25
+                strength = 0.5
             else:
                 strength = 1
         else:
@@ -396,6 +396,9 @@ class RunText:
 
         delay = 1 / speed
         interval = self.ledH / (maxFlakes * speed)
+        horizontalSpeed = int(metrics['yandex']['fact']['wind_speed']/3)
+        if horizontalSpeed > 0:
+            minX = -16
 
         nowMicro = datetime.datetime.now().timestamp()
         if (len(self.snow) < maxFlakes) and (nowMicro - self.snowTimer > interval):
@@ -418,7 +421,7 @@ class RunText:
                 self.snow[i]['x'] += int(metrics['yandex']['fact']['wind_speed']/4)
             elif metrics['yandex']['radar']['current']['prec_type'] == 2:
                 self.snow[i]['y'] += 1
-                self.snow[i]['x'] += random.randint(0, int(metrics['yandex']['fact']['wind_speed']/3))
+                self.snow[i]['x'] += random.randint(0, horizontalSpeed)
             elif metrics['yandex']['radar']['current']['prec_type'] == 3:
                 self.snow[i]['color'] = self.getColorByPrec(3)
                 self.snow[i]['y'] += 1
