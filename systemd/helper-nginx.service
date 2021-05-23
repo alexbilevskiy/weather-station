@@ -1,0 +1,13 @@
+[Unit]
+#install - `sudo ln -s /opt/src/station/systemd/helper-nginx.service /etc/systemd/system/helper-nginx.service`
+Description=nginx Helper Simple Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=-/bin/mkdir /var/log/nginx
+Restart=on-abort
+
+
+[Install]
+WantedBy=multi-user.target
