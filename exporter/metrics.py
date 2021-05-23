@@ -36,6 +36,8 @@ help = {
     'yandex.radar.current.prec_type': {'title': 'Precipitation type', 'key': 'prec_type'},
     'yandex.radar.current.cloudness': {'title': 'Cloudness', 'key': 'cloudness'},
 }
+print("Content-type: text/plain")
+print('')
 
 def getNested(metrics, key):
     keys = key.split('.')

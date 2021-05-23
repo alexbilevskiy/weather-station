@@ -2,7 +2,7 @@
 #coding: UTF-8
 import telegram, memcache, cgi, json, os, math
 
-print('Content-Type: text/plain; charset=utf-8')
+print("Content-type: text/plain")
 print('')
 
 arguments = cgi.FieldStorage()
