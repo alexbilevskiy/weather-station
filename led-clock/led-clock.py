@@ -526,9 +526,9 @@ class RunText:
         self.mqcl.publish('homeassistant/light/led-clock/config', json.dumps(config))
 
     def mqtt_message(self, client, userdata, msg):
-        if re.match('.+state$', msg.topic):
-            self.mqtt_state()
-        elif re.match('.+set$', msg.topic):
+        #if re.match('.+state$', msg.topic):
+            #self.mqtt_state()
+        if re.match('.+set$', msg.topic):
             cmd = json.loads(msg.payload)
             if 'state' not in cmd:
                 print('MQTT SET INVALID: ' + str(msg.payload))
