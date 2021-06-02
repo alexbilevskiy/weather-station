@@ -470,6 +470,7 @@ class RunText:
                 self.bri = 0.5
             else:
                 self.matrix.brightness = self.userBrightness
+                self.bri = 1
             self.initColors()
             return
         # and now.minute >= 30
