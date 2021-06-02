@@ -520,7 +520,8 @@ class RunText:
             "command_topic": "~/set",
             "state_topic": "~/state",
             "schema": "json",
-            "brightness": True
+            "brightness": True,
+            "brightness_scale": 100
         }
         self.mqcl.subscribe(config['~'] + '/#')
         self.mqcl.publish('homeassistant/light/led-clock/config', json.dumps(config))
