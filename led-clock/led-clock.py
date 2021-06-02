@@ -470,6 +470,7 @@ class RunText:
                 self.bri = 0.5
             else:
                 self.matrix.brightness = self.userBrightness
+            self.initColors()
             return
         # and now.minute >= 30
         self.bri = 1
@@ -536,10 +537,6 @@ class RunText:
                 return
             if cmd['state'] == 'ON':
                 if 'brightness' in cmd:
-                    if cmd['brightness'] == 1:
-                        self.bri = 0.5
-                    else:
-                        self.bri = 1
                     self.userBrightness = cmd['brightness']
                     print('set bri: ' + str(self.userBrightness))
                 else:
