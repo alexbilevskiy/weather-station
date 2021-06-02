@@ -465,7 +465,11 @@ class RunText:
 
     def defineBrightness(self, metrics, now):
         if self.userBrightness:
-            self.matrix.brightness = self.userBrightness
+            if self.userBrightness == 1:
+                self.matrix.brightness = 2
+                self.bri = 0.5
+            else:
+                self.matrix.brightness = self.userBrightness
             return
         # and now.minute >= 30
         self.bri = 1
