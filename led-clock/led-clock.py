@@ -192,7 +192,7 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 25, self.clockPos[1], self.colorW, m)
 
     def drawCo2(self, metrics):
-        if metrics['sensors']['co2_ppm']:
+        if metrics['sensors']['co2_ppm_cm11']:
             co2text = u'{0}p'.format(int(int(metrics['sensors']['co2_ppm'])/1))
         else:
             co2text = 'N/A'

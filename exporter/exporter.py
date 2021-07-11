@@ -30,6 +30,7 @@ class exporter:
                 'pr_mmHg': None,
                 'pr_temp': None,
                 'co2_ppm': None,
+                'co2_ppm_cm11': None,
                 'co2_temp': None,
                 'uptime_01': None,
                 'uptime_02': None,
@@ -37,6 +38,7 @@ class exporter:
                 'esp01_updated': 0,
                 'esp02_fail': 0,
                 'esp02_updated': 0,
+                'esp_air_02_fail': 0,
                 'size': 0,
                 'lag': 0,
             },
@@ -165,6 +167,29 @@ class exporter:
         self.metrics['sensors']['esp02_updated'] = self.metrics['custom']['utime']
         self.metrics['sensors']['uptime_02'] = uptime
         self.metrics['sensors']['esp02_fail'] = 0
+        return self.metrics
+
+    def readEspAir02(self, esp_data):
+        temp = {
+            'co2_ppm_cm11': {'v': 0, 't': 'float'},
+        }
+        try:
+            temp['co2_ppm_cm11']['v'] = esp_data['co2_ppm']
+        except Exception as e:
+            print('Bad rcv unpacked 02: ' + str(esp_data) + ' ' + str(e))
+            self.metrics['sensors']['esp_air_02_fail'] = 1
+            #self.metrics['devices']['ESP_air_02']['state'] = 0
+            return False
+        try:
+            for name in temp:
+                temp[name]['v'] = self.normalize(name, temp[name]['v'], temp[name]['t'])
+        except ValueError as e:
+            print('Cant convert some variables ' + str(esp_data) + ', ' + str(e))
+            self.metrics['sensors']['esp_air_02_fail'] = 1
+            return False
+        for name in temp:
+            self.metrics['sensors'][name] = temp[name]['v']
+        self.metrics['sensors']['esp_air_02_fail'] = 0
         return self.metrics
 
     def normalize(self, name, val, paramType ='float'):
@@ -355,6 +380,8 @@ class exporter:
             self.readZigbee(m.group(1), data)
             if m.group(1) == 'ESP_air':
                 self.readEsp02(data)
+            elif m.group(1) == 'ESP_air_02':
+                self.readEspAir02(data)
             elif m.group(1) == 'ESP_weather':
                 self.readEsp01(data)
             return
