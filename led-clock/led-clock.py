@@ -193,7 +193,7 @@ class RunText:
 
     def drawCo2(self, metrics):
         if metrics['sensors']['co2_ppm_cm11']:
-            co2text = u'{0}p'.format(int(int(metrics['sensors']['co2_ppm'])/1))
+            co2text = u'{0}p'.format(int(int(metrics['sensors']['co2_ppm_cm11'])/1))
         else:
             co2text = 'N/A'
         width = len(co2text) * self.fontSmW
