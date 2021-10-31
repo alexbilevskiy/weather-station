@@ -60,9 +60,11 @@ for m in help:
 
 for deviceId in metrics['devices']:
     for devField in metrics['devices'][deviceId]:
-        if devField == 'update' or devField == 'action' or devField == 'click':
+        if devField == 'update' or devField == 'action' or devField == 'click' or devField == 'power_on_behavior':
             continue
         metricname = 'st_' + devField
         metricVal = metrics['devices'][deviceId][devField]
+        if metricVal is None:
+            continue
         print('# TYPE {0} gauge'.format(metricname))
         print('{0}{{sensor="{1}"}} {2}'.format(metricname, deviceId, metricVal))
