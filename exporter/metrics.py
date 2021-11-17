@@ -64,7 +64,7 @@ for deviceId in metrics['devices']:
             continue
         metricname = 'st_' + devField
         metricVal = metrics['devices'][deviceId][devField]
-        if metricVal is None:
+        if metricVal is None or metricVal is False:
             continue
         print('# TYPE {0} gauge'.format(metricname))
         print('{0}{{sensor="{1}"}} {2}'.format(metricname, deviceId, metricVal))
