@@ -1,9 +1,11 @@
 #!/usr/bin/python3 -B
 # coding: UTF-8
 import re
+
+import requests
 from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 from PIL import Image
-import time, datetime, json, memcache, textwrap, random, os, psutil, collections
+import time, datetime, json, textwrap, random, os, psutil, collections
 import paho.mqtt.client as mqtt
 
 class RunText:
@@ -11,13 +13,18 @@ class RunText:
         p = psutil.Process()
         p.cpu_affinity([3])
 
+        with open('../config-clock.json') as f:
+            s = f.read()
+            self.config = json.loads(s)
+
         self.map = collections.OrderedDict()
 
-        self.mqcl = mqtt.Client("led-clock")
-        self.mqcl.enable_logger()
-        self.mqcl.on_connect = self.mqtt_connect
-        self.mqcl.on_message = self.mqtt_message
-        self.mqcl.connect("localhost", 1883, 60)
+        if self.config['mqtt']['enabled']:
+            self.mqcl = mqtt.Client("led-clock")
+            self.mqcl.enable_logger()
+            self.mqcl.on_connect = self.mqtt_connect
+            self.mqcl.on_message = self.mqtt_message
+            self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
 
         self.icons = {}
         self.ledW = 64
@@ -30,8 +37,6 @@ class RunText:
         self.humPos = [1, 23]
         self.windSpPos = [25, 23]
         self.forecastPos = [41, 23]
-
-        self.mc = memcache.Client(["127.0.0.1:11211"])
 
         self.fontReg = graphics.Font()
         self.fontReg.LoadFont("./fonts/10x20.bdf")
@@ -73,6 +78,9 @@ class RunText:
         self.matrix = RGBMatrix(options = options)
         self.canvas = self.matrix.CreateFrameCanvas()
 
+        self.metricsUpdated = None
+        self.metrics = None
+
     def initColors(self):
         if self.bri == self.prevBri:
             return
@@ -104,15 +112,8 @@ class RunText:
     def run(self):
         while True:
             self.mqcl.loop(0)
-            if self.mc.get('led-snake'):
-                time.sleep(1)
-                continue
-            text = self.mc.get('led-text')
-            if text:
-                self.printText(text.encode('utf-8'))
-            else:
-                self.clock()
-                time.sleep(self.delay)
+            self.clock()
+            time.sleep(self.delay)
 
     def printText(self, text):
         self.canvas.Clear()
@@ -134,7 +135,7 @@ class RunText:
         now = datetime.datetime.now()
         self.drawTime(now.strftime("%H"), now.strftime("%M"))
 
-        metrics = self.readArduino()
+        metrics = self.readMetrics()
         if (not metrics) or (metrics['sensors']['esp01_fail'] and metrics['sensors']['esp02_fail']):
             graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO DATA')
         elif metrics['sensors']['esp01_fail']:
@@ -453,13 +454,18 @@ class RunText:
             return 'e'
         return n
 
-    def readArduino(self):
-        jsn = self.mc.get('metrics')
-        if not jsn:
+    def readMetrics(self):
+        now = time.time()
+        if self.metricsUpdated > now + self.config['metrics_period']:
+            return self.metrics
+        resp = requests.get(self.config['metrics_url'])
+        if not resp:
             return False
-        metrics = json.loads(jsn)
+        metrics = resp.json()
         if metrics['sensors']['t_out'] is not None:
             metrics['sensors']['t_out'] = int(round(metrics['sensors']['t_out'], 0))
+        self.metricsUpdated = now
+        self.metrics = metrics
 
         return metrics
 

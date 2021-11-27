@@ -1,0 +1,9 @@
+{
+  "metrics_url": "http://localhost/metrics_raw.py",
+  "metrics_period": 60,
+  "mqtt": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 1883
+  }
+}
