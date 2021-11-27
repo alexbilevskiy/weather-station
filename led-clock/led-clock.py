@@ -78,7 +78,7 @@ class RunText:
         self.matrix = RGBMatrix(options = options)
         self.canvas = self.matrix.CreateFrameCanvas()
 
-        self.metricsUpdated = None
+        self.metricsUpdated = 0
         self.metrics = None
 
     def initColors(self):
