@@ -456,7 +456,7 @@ class RunText:
 
     def readMetrics(self):
         now = time.time()
-        if self.metricsUpdated > now + self.config['metrics_period']:
+        if self.metricsUpdated + self.config['metrics_period'] > now:
             return self.metrics
         resp = requests.get(self.config['metrics_url'])
         if not resp:
