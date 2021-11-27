@@ -350,6 +350,13 @@ class exporter:
         self.metrics['devices'][topic] = data
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
+    def readR4sDeviceValue(self, deviceId, field, value):
+        print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
+
+    def readR4sGateValue(self, field, value):
+        print("R4S GATE {0} [{1}]".format(field, value))
+
+
     def convertState(self, value):
         if value == 'ON':
             return 1
@@ -390,6 +397,17 @@ class exporter:
         if m:
             data = json.loads(msg.payload)
             self.readZigbee(m.group(1), data)
+            return
+
+        m = re.match('^r4s/(\w+?)/rsp/(\w+)$', msg.topic)
+        if m:
+            data = json.loads(msg.payload)
+            self.readR4sDeviceValue(m.group(1), m.group(2), data)
+            return
+        m = re.match('^r4s/(\w+?)$', msg.topic)
+        if m:
+            data = json.loads(msg.payload)
+            self.readR4sGateValue(m.group(1), data)
             return
         #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
