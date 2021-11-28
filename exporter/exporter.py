@@ -22,7 +22,6 @@ class exporter:
             'sensors': {
                 'co2_ppm': None,
                 'co2_ppm_cm11': None,
-                'co2_temp': None,
                 'uptime_02': None,
                 'esp02_fail': 0,
                 'esp02_updated': 0,
@@ -83,10 +82,12 @@ class exporter:
         }
         try:
             temp['co2_ppm']['v'] = esp_data['co2_ppm']
+            temp['co2_ppm_cm11']['v'] = esp_data['co2_ppm_cm11']
             temp['co2_s1']['v'] = esp_data['co2_s1']
             temp['co2_s2']['v'] = esp_data['co2_s2']
             temp['co2_s3']['v'] = esp_data['co2_s3']
             temp['co2_abc']['v'] = esp_data['co2_abc']
+            temp['co2_flags']['v'] = esp_data['co2_flags']
             uptime = esp_data['uptime']
         except Exception as e:
             print('Bad rcv unpacked 02: ' + str(esp_data) + ' ' + str(e))
