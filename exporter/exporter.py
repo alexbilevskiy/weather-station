@@ -409,7 +409,9 @@ class exporter:
         m = re.match('^r4s/(\w+?)/(\w+)$', msg.topic)
         if m:
             if m.group(2) == 'json':
-                #skip
+                data = json.loads(msg.payload)
+                for field in data:
+                    self.readR4sValue(m.group(1), field, str(data['field']))
                 return
             self.readR4sValue(m.group(1), m.group(2), msg.payload)
             return
