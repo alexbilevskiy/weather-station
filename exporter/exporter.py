@@ -398,7 +398,7 @@ class exporter:
             self.readZigbee(m.group(1), data)
             return
 
-        m = re.match('^r4s/(\w+?)/rsp/(\w+)$', msg.topic)
+        m = re.match('^r4s/(\w+?)/(\w+)$', msg.topic)
         if m:
             if m.group(2) == 'json':
                 #skip
@@ -409,7 +409,7 @@ class exporter:
         if m:
             self.readR4sValue("r4sgate", m.group(1), msg.payload)
             return
-        #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+        print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
 if __name__ == "__main__":
     exporter = exporter()
