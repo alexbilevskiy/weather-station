@@ -374,6 +374,7 @@ class exporter:
         print("Connected with result code "+str(rc))
         self.mqcl.subscribe('wifi2mqtt/#')
         self.mqcl.subscribe('zigbee2mqtt/#')
+        self.mqcl.subscribe('r4s/#')
 
     def mqtt_disconnected(self, client, userdata, rc):
         print("Disconnected with result code " + str(rc))
@@ -409,7 +410,7 @@ class exporter:
         if m:
             self.readR4sValue("r4sgate", m.group(1), msg.payload)
             return
-        print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+        #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
 if __name__ == "__main__":
     exporter = exporter()
