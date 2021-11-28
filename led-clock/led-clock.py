@@ -491,12 +491,18 @@ class RunText:
             self.initColors()
             return
         self.bri = 1
-        if 22 <= now.hour < 24:  # or (now.hour >=6 and now.hour < 9):
-            self.matrix.brightness = 3
-            self.bri = 1
-        elif 0 <= now.hour <= 5:
-            self.matrix.brightness = 2
+        if 0 <= now.hour < 6:
             self.bri = 0.5
+            self.matrix.brightness = 2
+        elif 6 <= now.hour < 9:
+            self.bri = 1
+            self.matrix.brightness = 20
+        elif 18 <= now.hour < 22:
+            self.bri = 1
+            self.matrix.brightness = 25
+        elif 22 <= now.hour < 24:
+            self.bri = 1
+            self.matrix.brightness = 3
         else:
             self.bri = 1
             self.matrix.brightness = 60
