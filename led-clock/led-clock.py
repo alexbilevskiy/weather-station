@@ -136,10 +136,8 @@ class RunText:
         self.drawTime(now.strftime("%H"), now.strftime("%M"))
 
         metrics = self.readMetrics()
-        if (not metrics) or (metrics['sensors']['esp01_fail'] and metrics['sensors']['esp02_fail']):
+        if (not metrics):
             graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO DATA')
-        elif metrics['sensors']['esp01_fail']:
-            graphics.DrawText(self.canvas, self.fontSm, 1, 23, graphics.Color(50, 0, 0), u'ESP01 fail')
         elif metrics['sensors']['esp02_fail']:
             graphics.DrawText(self.canvas, self.fontSm, 1, 23, graphics.Color(50, 0, 0), u'ESP02 fail')
 
@@ -235,7 +233,8 @@ class RunText:
         self.canvas.SetPixel(coords['x'] + 9, coords['y'] - 1, self.tempDotColor.red, self.tempDotColor.green, self.tempDotColor.blue)
 
         if int(datetime.datetime.now().strftime("%s")) % 10 >= 5:
-            temp = metrics['sensors']['t_out']
+            dev = self.config['devices']['temp_outside']
+            temp = metrics['devices'][dev['id']][dev['field']]
             col = self.outsideTempColor
         else:
             temp = metrics['yandex']['fact']['temp']

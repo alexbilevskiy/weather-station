@@ -5,5 +5,11 @@
     "enabled": true,
     "host": "localhost",
     "port": 1883
+  },
+  "devices": {
+    "temp_outside": {
+      "id" : "0x00158d0005866d7e",
+      "field": "temperature"
+    }
   }
 }

@@ -21,21 +21,11 @@ class exporter:
             },
             'sensors': {
                 't_in': None,
-                't_out': None,
                 'h_in': None,
-                'h_out': None,
-                'light': None,
-                'light_updated': None,
-                'pr_mBar': None,
-                'pr_mmHg': None,
-                'pr_temp': None,
                 'co2_ppm': None,
                 'co2_ppm_cm11': None,
                 'co2_temp': None,
-                'uptime_01': None,
                 'uptime_02': None,
-                'esp01_fail': 0,
-                'esp01_updated': 0,
                 'esp02_fail': 0,
                 'esp02_updated': 0,
                 'esp_air_02_fail': 0,
@@ -70,15 +60,7 @@ class exporter:
             self.metrics['custom']['datetime'] = date
             self.metrics['custom']['utime'] = utime
 
-            self.metrics['sensors']['esp01_fail'] = 0
             self.metrics['sensors']['esp02_fail'] = 0
-            try:
-                self.metrics['sensors']['esp01_updated']
-                if self.metrics['sensors']['esp01_updated'] < self.metrics['custom']['utime'] - 60:
-                    self.metrics['sensors']['esp01_fail'] = 1
-                    self.metrics['devices']['ESP_weather']['state'] = 0
-            except:
-                self.metrics['sensors']['esp01_fail'] = 1
             try:
                 self.metrics['sensors']['esp02_updated']
                 if self.metrics['sensors']['esp02_updated'] < self.metrics['custom']['utime'] - 60:
@@ -91,44 +73,6 @@ class exporter:
             self.readTraffic()
             self.mc.set('metrics', json.dumps(self.metrics), 300)
             time.sleep(0.5)
-
-    def readEsp01(self, esp_data):
-        temp = {
-            't_out': {'v': 0, 't': 'float'},
-            'h_out': {'v': 0, 't': 'float'},
-            'light': {'v': 0, 't': 'int'},
-            'pr_mBar': {'v': 0, 't': 'float'},
-            'pr_temp': {'v': 0, 't': 'float'}
-        }
-        try:
-            temp['t_out']['v'] = esp_data['dht22_temp']
-            temp['h_out']['v'] = esp_data['dht22_humidity']
-            temp['light']['v'] = esp_data['light']
-            temp['pr_mBar']['v'] = esp_data['bmp180_pressure']
-            temp['pr_temp']['v'] = esp_data['bmp180_temp']
-            uptime = esp_data['uptime']
-        except Exception as e:
-            print('Bad rcv unpacked 01: ' + str(esp_data) + ', ' + str(e))
-            self.metrics['sensors']['esp01_fail'] = 1
-            self.metrics['devices']['ESP_weather']['state'] = 0
-            return False
-        try:
-            for name in temp:
-                temp[name]['v'] = self.normalize(name, temp[name]['v'], temp[name]['t'])
-        except ValueError:
-            print('Cant convert some variables ' + str(esp_data))
-            self.metrics['sensors']['esp01_fail'] = 1
-            self.metrics['devices']['ESP_weather']['state'] = 0
-            return False
-        if self.metrics['sensors']['light'] != temp['light']['v']:
-            self.metrics['sensors']['light_updated'] = self.metrics['custom']['utime']
-        for name in temp:
-            self.metrics['sensors'][name] = temp[name]['v']
-        self.metrics['sensors']['esp01_updated'] = self.metrics['custom']['utime']
-        self.metrics['sensors']['uptime_01'] = uptime
-
-        self.metrics['sensors']['esp01_fail'] = 0
-        return self.metrics
 
     def readEsp02(self, esp_data):
         temp = {
@@ -418,8 +362,6 @@ class exporter:
                 self.readEsp02(data)
             elif m.group(1) == 'ESP_air_02':
                 self.readEspAir02(data)
-            elif m.group(1) == 'ESP_weather':
-                self.readEsp01(data)
             return
 
         m = re.match('.*?zigbee2mqtt/(\w+)$', msg.topic)
