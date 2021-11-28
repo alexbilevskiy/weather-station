@@ -354,17 +354,19 @@ class exporter:
         if type(value) == int:
             # nothing to do
             pass
-        elif type(value) == str:
+        elif type(value) == bytes:
+            value = value.decode('utf-8')
+        if type(value) == str:
             if value.isdigit():
                 value = int(value)
             else:
-                value = value.decode('utf-8')
                 if re.match('^-?\d+$', value):
                     value = int(value)
                 elif re.match('^on$', value, flags=re.IGNORECASE):
                     value = 1
                 elif re.match('^off$', value, flags=re.IGNORECASE):
                     value = 0
+
         # print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
         if deviceId not in self.metrics['devices']:
             self.metrics['devices'][deviceId] = {}
