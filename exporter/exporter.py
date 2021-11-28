@@ -351,14 +351,21 @@ class exporter:
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
     def readR4sValue(self, deviceId, field, value):
-        value = value.decode('utf-8')
-        if re.match('^-?\d+$', value):
-            value = int(value)
-        elif re.match('^on$', value, flags=re.IGNORECASE):
-            value = 1
-        elif re.match('^off$', value, flags=re.IGNORECASE):
-            value = 0
-       # print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
+        if type(value) == int:
+            # nothing to do
+            pass
+        elif type(value) == str:
+            if value.isdigit():
+                value = int(value)
+            else:
+                value = value.decode('utf-8')
+                if re.match('^-?\d+$', value):
+                    value = int(value)
+                elif re.match('^on$', value, flags=re.IGNORECASE):
+                    value = 1
+                elif re.match('^off$', value, flags=re.IGNORECASE):
+                    value = 0
+        # print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
         if deviceId not in self.metrics['devices']:
             self.metrics['devices'][deviceId] = {}
         self.metrics['devices'][deviceId][field] = value
@@ -411,7 +418,7 @@ class exporter:
             if m.group(2) == 'json':
                 data = json.loads(msg.payload)
                 for field in data:
-                    self.readR4sValue(m.group(1), field, str(data['field']))
+                    self.readR4sValue(m.group(1), field, data['field'])
                 return
             self.readR4sValue(m.group(1), m.group(2), msg.payload)
             return
