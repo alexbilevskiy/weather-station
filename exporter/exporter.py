@@ -357,9 +357,9 @@ class exporter:
         value = value.decode('utf-8')
         if re.match('^-?\d+$', value):
             value = int(value)
-        if re.match('^on$', value, flags=re.IGNORECASE):
+        elif re.match('^on$', value, flags=re.IGNORECASE):
             value = 1
-        if re.match('^off$', value, flags=re.IGNORECASE):
+        elif re.match('^off$', value, flags=re.IGNORECASE):
             value = 0
         print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
 
