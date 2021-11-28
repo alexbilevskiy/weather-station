@@ -354,6 +354,7 @@ class exporter:
         # if deviceId not in self.metrics['devices']:
         #     self.metrics['devices'][deviceId] = {}
         # self.metrics['devices'][deviceId][field] = value
+        value = str(value)
         if re.match('^-?\d+$', value):
             value = int(value)
         if re.match('^on$', value, flags=re.IGNORECASE):
