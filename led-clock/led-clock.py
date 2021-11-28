@@ -141,7 +141,7 @@ class RunText:
         elif metrics['sensors']['esp02_fail']:
             graphics.DrawText(self.canvas, self.fontSm, 1, 23, graphics.Color(50, 0, 0), u'ESP02 fail')
 
-        self.defineBrightness(metrics, now)
+        self.defineBrightness(now)
 
         self.drawTemp(metrics)
         self.drawForecast(metrics)
@@ -480,7 +480,7 @@ class RunText:
 
         return metrics
 
-    def defineBrightness(self, metrics, now):
+    def defineBrightness(self, now):
         if self.userBrightness:
             if self.userBrightness == 1:
                 self.matrix.brightness = 2
@@ -490,7 +490,6 @@ class RunText:
                 self.bri = 1
             self.initColors()
             return
-        # and now.minute >= 30
         self.bri = 1
         if 22 <= now.hour < 24:  # or (now.hour >=6 and now.hour < 9):
             self.matrix.brightness = 3
@@ -500,6 +499,7 @@ class RunText:
             self.bri = 0.5
         else:
             self.bri = 1
+            self.matrix.brightness = 60
         self.initColors()
 
     def mqtt_connect(self, client, userdata, flags, rc):
