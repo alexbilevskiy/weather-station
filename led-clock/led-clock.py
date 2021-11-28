@@ -466,7 +466,12 @@ class RunText:
 
         if not resp:
             return False
-        metrics = resp.json()
+        try:
+            metrics = resp.json()
+        except Exception as e:
+            print("Invalid metrics `{0}`: {1}".format(resp.text, str(e)))
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS INVALID')
+            return self.metrics
         if metrics['sensors']['t_out'] is not None:
             metrics['sensors']['t_out'] = int(round(metrics['sensors']['t_out'], 0))
         self.metricsUpdated = now
