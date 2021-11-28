@@ -411,7 +411,7 @@ class exporter:
             try:
                 data = json.loads(msg.payload)
             except Exception as e:
-                print("Failed to decode {0}: {1}".format(msg.topic, str(e)))
+                print("Failed to decode {0} `{1}`: {2}".format(msg.topic, str(msg.payload), str(e)))
                 return
             self.readZigbee(m.group(1), data)
             if m.group(1) == 'ESP_air':
