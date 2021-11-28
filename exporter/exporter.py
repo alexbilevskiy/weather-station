@@ -72,7 +72,7 @@ class exporter:
 
     def readEsp02(self, esp_data):
         temp = {
-            'co2_ppm': {'v': 0, 't': 'float'},
+            'co2_ppm_s8': {'v': 0, 't': 'float'},
             'co2_s1': {'v': 0, 't': 'fixed'},
             'co2_s2': {'v': 0, 't': 'fixed'},
             'co2_s3': {'v': 0, 't': 'fixed'},
@@ -81,7 +81,7 @@ class exporter:
             'co2_ppm_cm11': {'v': 0, 't': 'float'},
         }
         try:
-            temp['co2_ppm']['v'] = esp_data['co2_ppm']
+            temp['co2_ppm_s8']['v'] = esp_data['co2_ppm']
             temp['co2_ppm_cm11']['v'] = esp_data['co2_ppm_cm11']
             temp['co2_s1']['v'] = esp_data['co2_s1']
             temp['co2_s2']['v'] = esp_data['co2_s2']
