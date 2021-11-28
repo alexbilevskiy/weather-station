@@ -234,7 +234,10 @@ class RunText:
 
         if int(datetime.datetime.now().strftime("%s")) % 10 >= 5:
             dev = self.config['devices']['temp_outside']
-            temp = metrics['devices'][dev['id']][dev['field']]
+            try:
+                temp = int(round(metrics['devices'][dev['id']][dev['field']], 0))
+            except:
+                temp = None
             col = self.outsideTempColor
         else:
             temp = metrics['yandex']['fact']['temp']
