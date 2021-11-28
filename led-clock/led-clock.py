@@ -458,7 +458,13 @@ class RunText:
         now = time.time()
         if self.metricsUpdated + self.config['metrics_period'] > now:
             return self.metrics
-        resp = requests.get(self.config['metrics_url'])
+        try:
+            resp = requests.get(self.config['metrics_url'])
+        except Exception as e:
+            print("Cannot load metrics: {0}".format(str(e)))
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS ERROR')
+            return self.metrics
+
         if not resp:
             return False
         metrics = resp.json()
