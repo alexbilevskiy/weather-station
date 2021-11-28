@@ -351,9 +351,6 @@ class exporter:
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
     def readR4sValue(self, deviceId, field, value):
-        # if deviceId not in self.metrics['devices']:
-        #     self.metrics['devices'][deviceId] = {}
-        # self.metrics['devices'][deviceId][field] = value
         value = value.decode('utf-8')
         if re.match('^-?\d+$', value):
             value = int(value)
@@ -361,7 +358,10 @@ class exporter:
             value = 1
         elif re.match('^off$', value, flags=re.IGNORECASE):
             value = 0
-        print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
+       # print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
+        if deviceId not in self.metrics['devices']:
+            self.metrics['devices'][deviceId] = {}
+        self.metrics['devices'][deviceId][field] = value
 
     def convertState(self, value):
         if value == 'ON':
