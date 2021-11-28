@@ -20,15 +20,12 @@ class exporter:
                 'day_percent': None,
             },
             'sensors': {
-                't_in': None,
-                'h_in': None,
                 'co2_ppm': None,
                 'co2_ppm_cm11': None,
                 'co2_temp': None,
                 'uptime_02': None,
                 'esp02_fail': 0,
                 'esp02_updated': 0,
-                'esp_air_02_fail': 0,
                 'size': 0,
                 'lag': 0,
             },
@@ -76,17 +73,15 @@ class exporter:
 
     def readEsp02(self, esp_data):
         temp = {
-            't_in': {'v': 0, 't': 'float'},
-            'h_in': {'v': 0, 't': 'float'},
             'co2_ppm': {'v': 0, 't': 'float'},
             'co2_s1': {'v': 0, 't': 'fixed'},
             'co2_s2': {'v': 0, 't': 'fixed'},
             'co2_s3': {'v': 0, 't': 'fixed'},
-            'co2_abc': {'v': 0, 't': 'fixed'}
+            'co2_abc': {'v': 0, 't': 'fixed'},
+            'co2_flags': {'v': 0, 't': 'fixed'},
+            'co2_ppm_cm11': {'v': 0, 't': 'float'},
         }
         try:
-            temp['t_in']['v'] = esp_data['dht22_temp']
-            temp['h_in']['v'] = esp_data['dht22_humidity']
             temp['co2_ppm']['v'] = esp_data['co2_ppm']
             temp['co2_s1']['v'] = esp_data['co2_s1']
             temp['co2_s2']['v'] = esp_data['co2_s2']
@@ -111,29 +106,6 @@ class exporter:
         self.metrics['sensors']['esp02_updated'] = self.metrics['custom']['utime']
         self.metrics['sensors']['uptime_02'] = uptime
         self.metrics['sensors']['esp02_fail'] = 0
-        return self.metrics
-
-    def readEspAir02(self, esp_data):
-        temp = {
-            'co2_ppm_cm11': {'v': 0, 't': 'float'},
-        }
-        try:
-            temp['co2_ppm_cm11']['v'] = esp_data['co2_ppm']
-        except Exception as e:
-            print('Bad rcv unpacked 02: ' + str(esp_data) + ' ' + str(e))
-            self.metrics['sensors']['esp_air_02_fail'] = 1
-            #self.metrics['devices']['ESP_air_02']['state'] = 0
-            return False
-        try:
-            for name in temp:
-                temp[name]['v'] = self.normalize(name, temp[name]['v'], temp[name]['t'])
-        except ValueError as e:
-            print('Cant convert some variables ' + str(esp_data) + ', ' + str(e))
-            self.metrics['sensors']['esp_air_02_fail'] = 1
-            return False
-        for name in temp:
-            self.metrics['sensors'][name] = temp[name]['v']
-        self.metrics['sensors']['esp_air_02_fail'] = 0
         return self.metrics
 
     def normalize(self, name, val, paramType ='float'):
@@ -358,10 +330,8 @@ class exporter:
                 print("Failed to decode {0} `{1}`: {2}".format(msg.topic, str(msg.payload), str(e)))
                 return
             self.readZigbee(m.group(1), data)
-            if m.group(1) == 'ESP_air':
+            if m.group(1) == 'ESP_air_02':
                 self.readEsp02(data)
-            elif m.group(1) == 'ESP_air_02':
-                self.readEspAir02(data)
             return
 
         m = re.match('.*?zigbee2mqtt/(\w+)$', msg.topic)
