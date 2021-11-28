@@ -497,35 +497,7 @@ class RunText:
             self.bri = 0.5
         else:
             self.bri = 1
-
-            if not metrics['sensors']['light']:
-                light = 20
-            else:
-                light = metrics['sensors']['light']
-            self.defineBrightnessByLight(light)
         self.initColors()
-
-    def defineBrightnessByLight(self, light):
-        if light >= 400:
-            self.matrix.brightness = 55
-            self.bri = 2
-        elif light >= 300:
-            self.matrix.brightness = 55
-            self.bri = 1
-        elif light >= 200:
-            self.matrix.brightness = 45
-        elif light >= 100:
-            self.matrix.brightness = 40
-        elif light >= 50:
-            self.matrix.brightness = 35
-        elif light >= 25:
-            self.matrix.brightness = 30
-        elif light >= 20:
-            self.matrix.brightness = 25
-        elif light >= 15:
-            self.matrix.brightness = 20
-        else:
-            self.matrix.brightness = 15
 
     def mqtt_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
