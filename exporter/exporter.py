@@ -408,7 +408,11 @@ class exporter:
     def mqtt_message(self, client, userdata, msg):
         m = re.match('.*?wifi2mqtt/(\w+)$', msg.topic)
         if m:
-            data = json.loads(msg.payload)
+            try:
+                data = json.loads(msg.payload)
+            except Exception as e:
+                print("Failed to decode {0}: {1}".format(msg.topic, str(e)))
+                return
             self.readZigbee(m.group(1), data)
             if m.group(1) == 'ESP_air':
                 self.readEsp02(data)
