@@ -422,7 +422,7 @@ class exporter:
             if m.group(2) == 'json':
                 data = json.loads(msg.payload)
                 for field in data:
-                    self.readR4sValue(m.group(1), field, data['field'])
+                    self.readR4sValue(m.group(1), field, data[field])
                 return
             self.readR4sValue(m.group(1), m.group(2), msg.payload)
             return
