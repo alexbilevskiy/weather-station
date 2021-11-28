@@ -354,6 +354,12 @@ class exporter:
         # if deviceId not in self.metrics['devices']:
         #     self.metrics['devices'][deviceId] = {}
         # self.metrics['devices'][deviceId][field] = value
+        if re.match('^-?\d+$', value):
+            value = int(value)
+        if re.match('^on$', value, flags=re.IGNORECASE):
+            value = 1
+        if re.match('^off$', value, flags=re.IGNORECASE):
+            value = 0
         print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
 
     def convertState(self, value):
