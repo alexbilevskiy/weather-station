@@ -351,11 +351,20 @@ class exporter:
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
     def readR4sValue(self, deviceId, field, value):
+        if field == 'nightlight_rgb' or field == 'rgb':
+            return
         if type(value) == int:
             # nothing to do
             pass
         elif type(value) == bytes:
             value = value.decode('utf-8')
+
+        if field == 'total_energy':
+            value = float(value)
+        elif field == 'working_time':
+            h, m, s = map(int, value.split(':'))
+            value = h * 3600 + m * 60 + s
+
         if type(value) == str:
             if value.isdigit():
                 value = int(value)

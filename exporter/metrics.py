@@ -58,13 +58,23 @@ for m in help:
     print('# TYPE {0} untyped'.format(metricname, help[m]['title']))
     print('{0} {1}'.format(metricname, getNested(metrics, m)))
 
+excludedFiels = [
+    'update',
+    'action',
+    'click',
+    'power_on_behavior'
+]
 for deviceId in metrics['devices']:
+    name = metrics['devices'][deviceId].pop('name', None)
+    for f in excludedFiels:
+        metrics['devices'][deviceId].pop(f, None)
     for devField in metrics['devices'][deviceId]:
-        if devField == 'update' or devField == 'action' or devField == 'click' or devField == 'power_on_behavior':
-            continue
         metricname = 'st_' + devField
         metricVal = metrics['devices'][deviceId][devField]
         if metricVal is None or metricVal is False:
             continue
         print('# TYPE {0} gauge'.format(metricname))
-        print('{0}{{sensor="{1}"}} {2}'.format(metricname, deviceId, metricVal))
+        if name:
+            print('{0}{{sensor="{1}", name="{2}"}} {3}'.format(metricname, deviceId, name, metricVal))
+        else:
+            print('{0}{{sensor="{1}"}} {2}'.format(metricname, deviceId, metricVal))
