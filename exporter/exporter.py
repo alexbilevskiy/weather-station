@@ -362,9 +362,9 @@ class exporter:
             else:
                 if re.match('^-?\d+$', value):
                     value = int(value)
-                elif re.match('^on$', value, flags=re.IGNORECASE):
+                elif re.match('^on(line)?$', value, flags=re.IGNORECASE):
                     value = 1
-                elif re.match('^off$', value, flags=re.IGNORECASE):
+                elif re.match('^off(line)?$', value, flags=re.IGNORECASE):
                     value = 0
 
         # print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
@@ -415,7 +415,9 @@ class exporter:
             self.readZigbee(m.group(1), data)
             return
 
-        m = re.match('^r4s/(\w+?)/(\w+)$', msg.topic)
+        # r4s/f4ad35a94031/rssi
+        # r4s/f4ad35a94031/rsp/json
+        m = re.match('^r4s/(\w+?)/(?:rsp/)?(\w+)$', msg.topic)
         if m:
             if m.group(2) == 'json':
                 data = json.loads(msg.payload)
