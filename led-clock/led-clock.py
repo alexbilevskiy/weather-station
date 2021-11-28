@@ -200,9 +200,10 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.co2Pos[1], self.co2Color, co2text)
 
     def drawHumidity(self, metrics):
-        if metrics['sensors']['h_in']:
-            hinText = u'{0}%'.format(int(int(metrics['sensors']['h_in'])/1))
-        else:
+        dev_hum = self.config['devices']['humidity_inside']
+        try:
+            hinText = u'{0}%'.format(int(round(metrics['devices'][dev_hum['id']][dev_hum['field']], 0)))
+        except:
             hinText = 'N/A'
         width = len(hinText) * self.fontSmW
         coords = self.getCoords('hum', self.humPos[1], width, self.fontSmH, color=[255, 100, 100], a='left')
@@ -219,10 +220,11 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.windSpPos[1], self.windColor, windSpeedText)
 
     def drawTemp(self, metrics):
-        if metrics['sensors']['t_in']:
-            r, d = str(round(metrics['sensors']['t_in'], 1)).split('.')
-        else:
-            r = 'N'
+        dev_in = self.config['devices']['temp_inside']
+        try:
+            r, d = str(round(metrics['devices'][dev_in['id']][dev_in['field']], 1)).split('.')
+        except:
+            r = 'N/'
             d = 'A'
 
         width = 17
@@ -233,9 +235,9 @@ class RunText:
         self.canvas.SetPixel(coords['x'] + 9, coords['y'] - 1, self.tempDotColor.red, self.tempDotColor.green, self.tempDotColor.blue)
 
         if int(datetime.datetime.now().strftime("%s")) % 10 >= 5:
-            dev = self.config['devices']['temp_outside']
+            dev_out = self.config['devices']['temp_outside']
             try:
-                temp = int(round(metrics['devices'][dev['id']][dev['field']], 0))
+                temp = int(round(metrics['devices'][dev_out['id']][dev_out['field']], 0))
             except:
                 temp = None
             col = self.outsideTempColor

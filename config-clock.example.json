@@ -10,6 +10,14 @@
     "temp_outside": {
       "id" : "0x00158d0005866d7e",
       "field": "temperature"
+    },
+    "temp_inside": {
+      "id" : "0x00158d0001713dab",
+      "field": "temperature"
+    },
+    "humidity_inside": {
+      "id" : "0x00158d0001713dab",
+      "field": "humidity"
     }
   }
 }
