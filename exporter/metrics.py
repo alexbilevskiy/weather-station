@@ -8,13 +8,6 @@ help = {
     'custom.traf_from': {'title': 'Traffic: to metro', 'key': 'traf_from'},
     'custom.traf_to': {'title': 'Traffic: home', 'key': 'traf_to'},
 
-    'sensors.t_in': {'title': 'Temperature inside', 'key': 't_in'},
-    'sensors.h_in': {'title': 'Humidity inside', 'key': 'h_in'},
-    'sensors.co2_ppm': {'title': 'CO2 PPM', 'key': 'co2_ppm'},
-    'sensors.co2_s1': {'title': 'CO2 debug - S1', 'key': 'co2_s1'},
-    'sensors.co2_s2': {'title': 'CO2 debug - S1', 'key': 'co2_s2'},
-    'sensors.co2_s3': {'title': 'CO2 debug - S1', 'key': 'co2_s3'},
-    'sensors.co2_abc': {'title': 'CO2 debug - ABC', 'key': 'co2_abc'},
     'sensors.uptime_02': {'title': 'Uptime ESP02', 'key': 'uptime_02'},
     'sensors.esp02_fail': {'title': 'ESP02 error', 'key': 'esp02_fail'},
     'sensors.lag': {'title': 'Metrics lag', 'key': 'lag'},
