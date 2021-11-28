@@ -400,13 +400,14 @@ class exporter:
 
         m = re.match('^r4s/(\w+?)/rsp/(\w+)$', msg.topic)
         if m:
-            data = json.loads(msg.payload)
-            self.readR4sValue(m.group(1), m.group(2), data)
+            if m.group(2) == 'json':
+                #skip
+                return
+            self.readR4sValue(m.group(1), m.group(2), msg.payload)
             return
         m = re.match('^r4s/(\w+?)$', msg.topic)
         if m:
-            data = json.loads(msg.payload)
-            self.readR4sValue("r4sgate", m.group(1), data)
+            self.readR4sValue("r4sgate", m.group(1), msg.payload)
             return
         #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
