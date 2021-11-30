@@ -235,7 +235,7 @@ class exporter:
             if not cur or 'alert' not in cur or 'current' not in cur['alert']:
                 print('yandex radar bad response: ' + str(resp.text.encode('utf-8')))
                 return self.metrics
-            print("Prec strength: {0}".format(cur['strength']))
+            print("Prec strength: {0}".format(cur['alert']['strength']))
 
         if not cur or 'alert' not in cur or 'current' not in cur['alert']:
             print('yandex radar bad cached: ' + str(cur))
