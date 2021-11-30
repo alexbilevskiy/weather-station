@@ -7,6 +7,8 @@ metrics = json.loads(metrics)
 help = {
     'custom.traf_from': {'title': 'Traffic: to metro', 'key': 'traf_from'},
     'custom.traf_to': {'title': 'Traffic: home', 'key': 'traf_to'},
+    'custom.day_length': {'title': 'Day lenngth', 'key': 'day_length'},
+    'custom.day_percent': {'title': 'Day percent', 'key': 'day_percent'},
 
     'sensors.uptime_02': {'title': 'Uptime ESP02', 'key': 'uptime_02'},
     'sensors.esp02_fail': {'title': 'ESP02 error', 'key': 'esp02_fail'},
