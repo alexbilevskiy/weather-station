@@ -54,9 +54,13 @@ excludedFiels = [
 ]
 for deviceId in metrics['devices']:
     name = metrics['devices'][deviceId].pop('name', None)
-    for f in excludedFiels:
-        metrics['devices'][deviceId].pop(f, None)
     for devField in metrics['devices'][deviceId]:
+        skip = False
+        for f in excludedFiels:
+            if devField.find(f) == 0:
+                skip = True
+        if skip:
+            continue
         metricname = 'st_' + devField
         metricVal = metrics['devices'][deviceId][devField]
         if metricVal is None or metricVal is False:
