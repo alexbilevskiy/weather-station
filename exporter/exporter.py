@@ -254,12 +254,9 @@ class exporter:
         return self.metrics
 
     def readZigbee(self, topic, data):
-        stateFields = ['state', 'state_left', 'state_right']
-        for f in stateFields:
-            try:
+        for f in data:
+            if f.find('state') == 0:
                 data[f] = self.convertState(data[f])
-            except:
-                pass
 
         try:
             data.pop('update')
