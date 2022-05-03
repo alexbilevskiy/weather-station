@@ -51,7 +51,8 @@ excludedFiels = [
     'action',
     'click',
     'power_on_behavior',
-    'switch_type'
+    'switch_type',
+    'sensitivity'
 ]
 for deviceId in metrics['devices']:
     name = metrics['devices'][deviceId].pop('name', None)
