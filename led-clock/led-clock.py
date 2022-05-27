@@ -287,6 +287,7 @@ class RunText:
         self.drawImage(self.getIcon(metrics['yandex']['forecast']['parts'][1]['icon']), coords['x'], coords['y'])
 
     def getIcon(self, iconName):
+        #https://yastatic.net/weather/i/icons/islands/32/
         if iconName in self.icons:
             return self.icons[iconName]
         i8 = '/opt/src/station/icons8/' + iconName + '_8.png'
