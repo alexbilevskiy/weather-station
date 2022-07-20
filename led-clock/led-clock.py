@@ -141,7 +141,7 @@ class RunText:
         elif metrics['sensors']['esp02_fail']:
             graphics.DrawText(self.canvas, self.fontSm, 1, 23, graphics.Color(50, 0, 0), u'ESP02 fail')
 
-        self.defineBrightness(now)
+        self.defineBrightness(now, metrics)
 
         self.drawTemp(metrics)
         self.drawForecast(metrics)
@@ -483,7 +483,7 @@ class RunText:
 
         return metrics
 
-    def defineBrightness(self, now):
+    def defineBrightness(self, now, metrics):
         if self.userBrightness:
             if self.userBrightness == 1:
                 self.matrix.brightness = 2
@@ -495,11 +495,19 @@ class RunText:
             return
         self.bri = 1
         if 0 <= now.hour < 6:
-            self.bri = 0.5
-            self.matrix.brightness = 2
+            if metrics['yandex']['fact']['daytime'] == 'n':
+                self.bri = 0.5
+                self.matrix.brightness = 2
+            else:
+                self.bri = 1
+                self.matrix.brightness = 20
         elif 6 <= now.hour < 9:
-            self.bri = 1
-            self.matrix.brightness = 20
+            if metrics['yandex']['fact']['daytime'] == 'n':
+                self.bri = 1
+                self.matrix.brightness = 20
+            else:
+                self.bri = 1
+                self.matrix.brightness = 50
         elif 18 <= now.hour < 22:
             self.bri = 1
             self.matrix.brightness = 25
