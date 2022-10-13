@@ -32,7 +32,7 @@ class listener():
         if msg.payload == '' or msg.payload is None or msg.payload == b'':
             print('empty payload for ' + str(msg.topic))
             return
-        if msg.topic == 'zigbee2mqtt/bridge/log' or msg.topic == 'zigbee2mqtt/bridge/logging' or msg.topic == 'zigbee2mqtt/bridge/groups':
+        if msg.topic == 'zigbee2mqtt/bridge/log' or msg.topic == 'zigbee2mqtt/bridge/logging' or msg.topic == 'zigbee2mqtt/bridge/groups' or msg.topic == 'zigbee2mqtt/bridge/info':
             return
 
         try:
