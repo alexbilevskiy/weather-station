@@ -47,7 +47,7 @@ for m in help:
     metricname = 'arduino_' + help[m]['key']
     print('# HELP {0} {1}'.format(metricname, help[m]['title']))
     print('# TYPE {0} untyped'.format(metricname, help[m]['title']))
-    if 'name_as_key' not in help['m']:
+    if 'name_as_key' not in help[m]:
         print('{0} {1}'.format(metricname, getNested(metrics, m)))
     else:
         print('{0}{subname="{1}"} {2}'.format(metricname, getNested(metrics, m), 1))
