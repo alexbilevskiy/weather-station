@@ -17,6 +17,9 @@ help = {
 
     'yandex.fact.feels_like': {'title': 'Yandex temperature feels like', 'key': 't_ya_feel'},
     'yandex.fact.temp': {'title': 'Yandex real temperature', 'key': 't_ya_real'},
+    # 'yandex.fact.condition': {'title': 'Yandex weather condition', 'key': 'ya_condition', "name_as_key": True},
+    # 'yandex.fact.icon': {'title': 'Yandex weather icon', 'key': 'ya_icon', "name_as_key": True},
+    # 'yandex.fact.wind_dir': {'title': 'Yandex wind direction', 'key': 'ya_w_direction', "name_as_key": True},
     'yandex.fact.humidity': {'title': 'Yandex humidity real', 'key': 'h_ya'},
     'yandex.fact.pressure_pa': {'title': 'Yandex pressure in mBar', 'key': 'pr_ya_pa'},
     'yandex.fact.wind_speed': {'title': 'Yandex wind speed m/s', 'key': 'ya_w_speed'},
@@ -71,8 +74,17 @@ for deviceId in metrics['devices']:
             continue
         if type(metricVal) == bool:
             metricVal = int(metricVal)
+
         print('# TYPE {0} gauge'.format(metricname))
-        if name:
-            print('{0}{{sensor="{1}", name="{2}"}} {3}'.format(metricname, deviceId, name, metricVal))
+        if type(metricVal) != dict:
+            if name:
+                print('{0}{{sensor="{1}", name="{2}"}} {3}'.format(metricname, deviceId, name, metricVal))
+            else:
+                print('{0}{{sensor="{1}"}} {2}'.format(metricname, deviceId, metricVal))
         else:
-            print('{0}{{sensor="{1}"}} {2}'.format(metricname, deviceId, metricVal))
+            for subKey in metricVal:
+                if name:
+                    print('{0}{{sensor="{1}", {2}="{3}" name="{4}"}} {5}'.format(metricname, deviceId, subKey, metricVal[subKey], name, metricVal))
+                else:
+                    print('{0}{{sensor="{1}", {2}="{3}"}} {4}'.format(metricname, deviceId, subKey, metricVal[subKey], metricVal))
+
