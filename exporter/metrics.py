@@ -84,7 +84,7 @@ for deviceId in metrics['devices']:
         else:
             for subKey in metricVal:
                 if name:
-                    print('{0}{{sensor="{1}", {2}="{3}" name="{4}"}} {5}'.format(metricname, deviceId, subKey, metricVal[subKey], name, metricVal))
+                    print('{0}{{sensor="{1}", subid="{2}" name="{3}"}} {4}'.format(metricname, deviceId, subKey, name, metricVal[subKey]))
                 else:
-                    print('{0}{{sensor="{1}", {2}="{3}"}} {4}'.format(metricname, deviceId, subKey, metricVal[subKey], metricVal))
+                    print('{0}{{sensor="{1}", subid="{2}"}} {3}'.format(metricname, deviceId, subKey, metricVal[subKey]))
 
