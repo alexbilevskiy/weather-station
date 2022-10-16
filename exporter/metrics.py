@@ -50,7 +50,7 @@ for m in help:
     if 'name_as_key' not in help[m]:
         print('{0} {1}'.format(metricname, getNested(metrics, m)))
     else:
-        print('{0}{subname="{1}"} {2}'.format(metricname, getNested(metrics, m), 1))
+        print('{0}{{subname="{1}"}} {2}'.format(metricname, getNested(metrics, m), 1))
 
 excludedFiels = [
     'update',
