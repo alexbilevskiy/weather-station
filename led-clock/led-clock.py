@@ -23,6 +23,7 @@ class RunText:
             self.mqcl = mqtt.Client("led-clock")
             self.mqcl.enable_logger()
             self.mqcl.on_connect = self.mqtt_connect
+            self.mqcl.on_disconnect = self.mqtt_disconnect
             self.mqcl.on_message = self.mqtt_message
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
 
@@ -533,6 +534,10 @@ class RunText:
         }
         self.mqcl.subscribe(config['~'] + '/#')
         self.mqcl.publish('homeassistant/light/led-clock/config', json.dumps(config))
+
+    def mqtt_disconnect(self, client, userdata, flags, rc):
+        print("mqtt disconnected!!!")
+        exit()
 
     def mqtt_message(self, client, userdata, msg):
         #if re.match('.+state$', msg.topic):
