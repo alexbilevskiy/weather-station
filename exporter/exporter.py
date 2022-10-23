@@ -65,12 +65,12 @@ class exporter:
             except:
                 self.metrics['sensors']['esp02_fail'] = 1
 
-            for devicekey in self.metrics['devices']:
-                if 'updated' not in self.metrics['devices'][devicekey]:
-                    continue
-                if self.metrics['devices'][devicekey]['updated'] < utime - 300:
-                    # self.metrics['devices'].pop("device")
-                    print('would remove devie {0}'.format(devicekey))
+            # for devicekey in self.metrics['devices']:
+            #     if 'updated' not in self.metrics['devices'][devicekey]:
+            #         continue
+            #     if self.metrics['devices'][devicekey]['updated'] < utime - 300:
+            #         self.metrics['devices'].pop("device")
+            #         print('would remove devie {0}'.format(devicekey))
             self.readYandex()
             self.readTraffic()
             self.mc.set('metrics', json.dumps(self.metrics), 300)
