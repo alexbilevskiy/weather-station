@@ -323,7 +323,7 @@ class exporter:
         self.mqcl.subscribe('zigbee2mqtt/#')
         self.mqcl.subscribe('r4s/#')
 
-    def mqtt_disconnected(self, client, userdata, rc):
+    def mqtt_disconnected(self, client, rc):
         print("Disconnected with result code " + str(rc))
         self.mqtt_connect()
 
