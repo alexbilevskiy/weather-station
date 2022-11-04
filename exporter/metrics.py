@@ -60,7 +60,8 @@ excludedFiels = [
     'switch_type',
     'sensitivity',
     'indicator_mode',
-    'power_outage_memory'
+    'power_outage_memory',
+    'volume'
 ]
 for deviceId in metrics['devices']:
     name = metrics['devices'][deviceId].pop('name', None)
