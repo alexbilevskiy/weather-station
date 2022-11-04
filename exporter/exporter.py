@@ -322,6 +322,8 @@ class exporter:
         self.mqcl.subscribe('wifi2mqtt/#')
         self.mqcl.subscribe('zigbee2mqtt/#')
         self.mqcl.subscribe('r4s/#')
+        self.mqcl.subscribe('r4s0/#')
+        self.mqcl.subscribe('r4s1/#')
 
     def mqtt_disconnected(self, client, rc):
         print("Disconnected with result code " + str(rc))
@@ -348,7 +350,7 @@ class exporter:
 
         # r4s/f4ad35a94031/rssi
         # r4s/f4ad35a94031/rsp/json
-        m = re.match('^r4s/(\w+?)/(?:rsp/)?(\w+)$', msg.topic)
+        m = re.match('^r4s\d*/(\w+?)/(?:rsp/)?(\w+)$', msg.topic)
         if m:
             if m.group(2) == 'json':
                 data = json.loads(msg.payload)
