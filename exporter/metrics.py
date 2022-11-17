@@ -62,7 +62,8 @@ excludedFiels = [
     'indicator_mode',
     'power_outage_memory',
     'volume',
-    'self_test'
+    'self_test',
+    'cli'
 ]
 types = []
 for deviceId in metrics['devices']:
