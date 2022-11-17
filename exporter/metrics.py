@@ -61,7 +61,8 @@ excludedFiels = [
     'sensitivity',
     'indicator_mode',
     'power_outage_memory',
-    'volume'
+    'volume',
+    'self_test'
 ]
 for deviceId in metrics['devices']:
     name = metrics['devices'][deviceId].pop('name', None)
