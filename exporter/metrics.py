@@ -64,7 +64,7 @@ excludedFiels = [
     'volume',
     'self_test'
 ]
-types = {}
+types = []
 for deviceId in metrics['devices']:
     name = metrics['devices'][deviceId].pop('name', None)
     for devField in metrics['devices'][deviceId]:
@@ -83,7 +83,7 @@ for deviceId in metrics['devices']:
 
         if metricname not in types:
             print('# TYPE {0} gauge'.format(metricname))
-            types[metricname] = True
+            types.append(metricname)
         if type(metricVal) != dict:
             if name:
                 print('{0}{{sensor="{1}", name="{2}"}} {3}'.format(metricname, deviceId, name, metricVal))
