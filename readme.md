@@ -4,7 +4,10 @@
 **Features**:
 * **LED Panel clock**
   * actually, the only real goal of this project
-  * \<photos here\>
+  * <details>
+    <summary>picture of device</summary>
+    picture
+    </details>
 * **Sensors**
   * current inside tempreature/humidity/CO2 level
   * current outside tempreature/humidity/pressure/light
@@ -16,7 +19,10 @@
   * zigbee sensors via zigbee2mqtt
   * r4s devices
 * **Prometheus exporter**
-  * \<grafana screenshot here>
+  <details>
+  <summary>grafana screenshot</summary>
+  ![img](screens/grafana.png)
+  </details>
   
 
 [**Project structure**](contents.md)
@@ -26,9 +32,10 @@
 
 *** 
 **External tools**
+* home assistant
+* zigbee2mqtt
 * memcached
 * mosquitto
-* home assistant
 * grafana
 * prometheus
 * ESP32 r4sGate
