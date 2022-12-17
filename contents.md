@@ -37,4 +37,4 @@ Snake, controllable via raw tcp socket
 (`systemd` directory)
 - units for led clock, exporter
 - units for hass, zigbee2mqtt, mosquitto, grafana, etc (though they do not belong here)
-- where is prometheus, you may ask? 
+- where is prometheus, you may ask? Windows box with spinning disk, of course!
