@@ -1,7 +1,7 @@
 [Unit]
 #install - `sudo ln -s /opt/src/station/systemd/hass.service /etc/systemd/system/hass.service`
 Description=Home Asssistant core
-After=network.target
+After=network-online.target
 StartLimitInterval=0
 
 [Service]
