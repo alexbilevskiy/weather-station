@@ -273,7 +273,7 @@ class exporter:
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
     def readR4sValue(self, deviceId, field, value):
-        if field == 'nightlight_rgb' or field == 'rgb':
+        if field == 'nightlight_rgb' or field == 'rgb' or  or field == 'ip':
             return
         if type(value) == int:
             # nothing to do
@@ -290,6 +290,8 @@ class exporter:
         if type(value) == str:
             if value.isdigit():
                 value = int(value)
+            elif is_float(value):
+                value = float(value)
             else:
                 if re.match('^-?\d+$', value):
                     value = int(value)
@@ -368,6 +370,16 @@ class exporter:
             self.readR4sValue("r4sgate1", m.group(1), msg.payload)
             return
         #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+
+
+def is_float(value):
+    if value is None:
+        return False
+    try:
+        float(value)
+        return True
+    except:
+        return False
 
 if __name__ == "__main__":
     exporter = exporter()
