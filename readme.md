@@ -6,7 +6,8 @@
   * actually, the only real goal of this project
   * <details>
     <summary>picture of device</summary>
-    picture
+    
+      https://user-images.githubusercontent.com/14160356/206857211-8d43333a-2a5c-4fe0-a5b3-7af17c93118c.mp4
     </details>
 * **Sensors**
   * current inside tempreature/humidity/CO2 level
@@ -21,8 +22,10 @@
 * **Prometheus exporter**
   <details>
   <summary>grafana screenshot</summary>
-  ![img](screens/grafana.png)
-  </details>
+  
+   ![img](screens/grafana.png)
+ 
+ </details>
   
 
 [**Project structure**](contents.md)
