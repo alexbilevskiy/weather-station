@@ -359,9 +359,13 @@ class exporter:
                 return
             self.readR4sValue(m.group(1), m.group(2), msg.payload)
             return
-        m = re.match('^r4s/(\w+?)$', msg.topic)
+        m = re.match('^r4s0/(\w+?)$', msg.topic)
         if m:
             self.readR4sValue("r4sgate", m.group(1), msg.payload)
+            return
+        m = re.match('^r4s1/(\w+?)$', msg.topic)
+        if m:
+            self.readR4sValue("r4sgate1", m.group(1), msg.payload)
             return
         #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
