@@ -273,7 +273,7 @@ class exporter:
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
     def readR4sValue(self, deviceId, field, value):
-        if field == 'nightlight_rgb' or field == 'rgb' or  or field == 'ip':
+        if field == 'nightlight_rgb' or field == 'rgb' or field == 'ip':
             return
         if type(value) == int:
             # nothing to do
