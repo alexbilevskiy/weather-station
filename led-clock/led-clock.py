@@ -549,7 +549,7 @@ class RunText:
         self.mqcl.subscribe(config['~'] + '/#')
         self.mqcl.publish('homeassistant/light/led-clock/config', payload=json.dumps(config), retain=True)
 
-    def mqtt_disconnect(self, client, userdata, flags, rc):
+    def mqtt_disconnect(self, client, userdata, rc):
         print("mqtt disconnected!!!")
         exit()
 
