@@ -19,13 +19,7 @@ class RunText:
 
         self.map = collections.OrderedDict()
 
-        if self.config['mqtt']['enabled']:
-            self.mqcl = mqtt.Client("led-clock")
-            self.mqcl.enable_logger()
-            self.mqcl.on_connect = self.mqtt_connect
-            self.mqcl.on_disconnect = self.mqtt_disconnect
-            self.mqcl.on_message = self.mqtt_message
-            self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
+        self.mqcl = None
 
         self.icons = {}
         self.ledW = 64
@@ -112,22 +106,8 @@ class RunText:
 
     def run(self):
         while True:
-            self.mqcl.loop(0)
             self.clock()
             time.sleep(self.delay)
-
-    def printText(self, text):
-        self.canvas.Clear()
-        now = int(time.time())
-        while int(time.time()) < now + 5:
-            self.canvas.Clear()
-            posX = 8
-            color = graphics.Color(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-            for line in textwrap.wrap(text, self.ledW/5):
-                graphics.DrawText(self.canvas, self.fontSm, 1, posX, color, line)
-                posX += 8
-            self.canvas = self.matrix.SwapOnVSync(self.canvas)
-            time.sleep(0.1)
 
     def clock(self):
         self.canvas.Clear()
@@ -135,6 +115,8 @@ class RunText:
         #graphics.DrawText(self.canvas, self.fontSm, 64, 20, self.colorG, u'MEOW MEOW')
         now = datetime.datetime.now()
         self.drawTime(now.strftime("%H"), now.strftime("%M"))
+
+        self.mqttLoop()
 
         metrics = self.readMetrics()
         if (not metrics):
@@ -153,6 +135,19 @@ class RunText:
         self.drawSky(metrics)
 
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
+
+    def printText(self, text):
+        self.canvas.Clear()
+        now = int(time.time())
+        while int(time.time()) < now + 5:
+            self.canvas.Clear()
+            posX = 8
+            color = graphics.Color(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            for line in textwrap.wrap(text, self.ledW/5):
+                graphics.DrawText(self.canvas, self.fontSm, 1, posX, color, line)
+                posX += 8
+            self.canvas = self.matrix.SwapOnVSync(self.canvas)
+            time.sleep(0.1)
 
     def getCoords(self, id, y, w, h, a='left', color=None, padding = 0, overlapY = False):
         if color is None:
@@ -460,30 +455,6 @@ class RunText:
             return 'e'
         return n
 
-    def readMetrics(self):
-        now = time.time()
-        if self.metricsUpdated + self.config['metrics_period'] > now:
-            return self.metrics
-        try:
-            resp = requests.get(self.config['metrics_url'])
-        except Exception as e:
-            print("Cannot load metrics: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS ERROR')
-            return self.metrics
-
-        if not resp:
-            return False
-        try:
-            metrics = resp.json()
-        except Exception as e:
-            print("Invalid metrics `{0}`: {1}".format(resp.text, str(e)))
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS INVALID')
-            return self.metrics
-        self.metricsUpdated = now
-        self.metrics = metrics
-
-        return metrics
-
     def defineBrightness(self, now, metrics):
         if self.userBrightness:
             if self.userBrightness == 1:
@@ -520,6 +491,49 @@ class RunText:
             self.matrix.brightness = 60
         self.initColors()
 
+    def readMetrics(self):
+        now = time.time()
+        if self.metricsUpdated + self.config['metrics_period'] > now:
+            return self.metrics
+        try:
+            resp = requests.get(self.config['metrics_url'])
+        except Exception as e:
+            print("Cannot load metrics: {0}".format(str(e)))
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS ERROR')
+            return self.metrics
+
+        if not resp:
+            return False
+        try:
+            metrics = resp.json()
+        except Exception as e:
+            print("Invalid metrics `{0}`: {1}".format(resp.text, str(e)))
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS INVALID')
+            return self.metrics
+        self.metricsUpdated = now
+        self.metrics = metrics
+
+        return metrics
+
+    def mqttLoop(self):
+        if not self.config['mqtt']['enabled']:
+            return
+        if self.mqcl is not None:
+            self.mqcl.loop(0)
+            return
+
+        self.mqcl = mqtt.Client("led-clock")
+        self.mqcl.enable_logger()
+        self.mqcl.on_connect = self.mqtt_connect
+        self.mqcl.on_disconnect = self.mqtt_disconnect
+        self.mqcl.on_message = self.mqtt_message
+        try:
+            self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
+        except Exception as e:
+            print("Cannot connect to mqtt: {0}".format(str(e)))
+            graphics.DrawText(self.canvas, self.fontSm, 1, 26, self.colorW, u'MQTT ERROR')
+            self.mqcl = None
+
     def mqtt_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
         config = {
@@ -533,7 +547,7 @@ class RunText:
             "brightness_scale": 100
         }
         self.mqcl.subscribe(config['~'] + '/#')
-        self.mqcl.publish('homeassistant/light/led-clock/config', json.dumps(config))
+        self.mqcl.publish('homeassistant/light/led-clock/config', payload=json.dumps(config), retain=True)
 
     def mqtt_disconnect(self, client, userdata, flags, rc):
         print("mqtt disconnected!!!")
