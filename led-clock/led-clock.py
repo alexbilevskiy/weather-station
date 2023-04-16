@@ -193,7 +193,7 @@ class RunText:
 
     def drawCo2(self, hass):
         if 'co2_ppm_cm11' in hass and hass['co2_ppm_cm11']:
-            co2text = u'{0}p'.format(int(hass['co2_ppm_cm11']))
+            co2text = u'{0}p'.format(int(float(hass['co2_ppm_cm11'])))
         else:
             co2text = 'N/A'
         width = len(co2text) * self.fontSmW
