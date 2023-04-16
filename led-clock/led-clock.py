@@ -75,6 +75,8 @@ class RunText:
 
         self.metricsUpdated = 0
         self.metrics = None
+        self.hassUpdated = 0
+        self.hass = None
 
     def initColors(self):
         if self.bri == self.prevBri:
@@ -120,15 +122,16 @@ class RunText:
 
         metrics = self.readMetrics()
         if (not metrics):
-            graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO DATA')
-        elif metrics['sensors']['esp02_fail']:
-            graphics.DrawText(self.canvas, self.fontSm, 1, 23, graphics.Color(50, 0, 0), u'ESP02 fail')
+            graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO METRICS')
+        hass = self.readHass()
+        if (not hass):
+            graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO HASS')
 
         self.defineBrightness(now, metrics)
 
         self.drawTemp(metrics)
         self.drawForecast(metrics)
-        self.drawCo2(metrics)
+        self.drawCo2(hass)
         self.drawHumidity(metrics)
         self.drawWind(metrics)
         self.drawPrecip(metrics)
@@ -186,8 +189,8 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 17, self.clockPos[1], self.colorW, ':')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 25, self.clockPos[1], self.colorW, m)
 
-    def drawCo2(self, metrics):
-        if metrics['sensors']['co2_ppm_cm11']:
+    def drawCo2(self, hass):
+        if 'co2_ppm_cm11' in hass and hass['co2_ppm_cm11']:
             co2text = u'{0}p'.format(int(int(metrics['sensors']['co2_ppm_cm11'])/1))
         else:
             co2text = 'N/A'
@@ -514,6 +517,32 @@ class RunText:
         self.metrics = metrics
 
         return metrics
+
+    def readHass(self):
+        now = time.time()
+        if self.hassUpdated + self.config['metrics_period'] > now:
+            return self.hass
+        try:
+            resp = requests.get(self.config['hass_url'], headers={"Authorization": "Bearer {0}".format(self.config['hass_token'])})
+        except Exception as e:
+            print("Cannot load hass: {0}".format(str(e)))
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'HASS ERROR')
+            return self.metrics
+
+        if not resp:
+            return False
+
+        hass = None
+        for line in resp.text.split("\n"):
+            m = re.match('hass_sensor_carbon_dioxide_ppm{domain="sensor",entity="sensor.co2_cm11",friendly_name="CO₂ cm11"} ([0-9.]+)$', line)
+            if not m:
+                continue
+            hass = {"co2_ppm_cm11": m.group(1)}
+
+        self.hassUpdated = now
+        self.hass = hass
+
+        return hass
 
     def mqttLoop(self):
         if not self.config['mqtt']['enabled']:
