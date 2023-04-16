@@ -252,6 +252,16 @@ class exporter:
         self.mqtt_connect()
 
     def mqtt_message(self, client, userdata, msg):
+        m = re.match('.*?wifi2mqtt/(\w+)$', msg.topic)
+        if m:
+            try:
+                data = json.loads(msg.payload)
+            except Exception as e:
+                print("Failed to decode {0} `{1}`: {2}".format(msg.topic, str(msg.payload), str(e)))
+                return
+            self.readZigbee(m.group(1), data)
+            return
+
         m = re.match('.*?zigbee2mqtt/(\w+)$', msg.topic)
         if m:
             data = json.loads(msg.payload)
