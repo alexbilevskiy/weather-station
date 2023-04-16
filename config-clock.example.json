@@ -19,5 +19,9 @@
       "id" : "0x00158d0001713dab",
       "field": "humidity"
     }
+  },
+  "hass": {
+    "url": "http://localhost/api/prometheus",
+    "token": "long_living_token"
   }
 }

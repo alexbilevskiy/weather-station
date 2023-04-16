@@ -523,7 +523,7 @@ class RunText:
         if self.hassUpdated + self.config['metrics_period'] > now:
             return self.hass
         try:
-            resp = requests.get(self.config['hass_url'], headers={"Authorization": "Bearer {0}".format(self.config['hass_token'])})
+            resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])})
         except Exception as e:
             print("Cannot load hass: {0}".format(str(e)))
             graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'HASS ERROR')
