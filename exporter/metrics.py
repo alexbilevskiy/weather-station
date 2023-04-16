@@ -51,7 +51,7 @@ for m in help:
         print('{0}{{subname="{1}"}} {2}'.format(metricname, value, 1))
 
 excludedFiels = [
-    'update',
+    'update_available',
     'action',
     'click',
     'power_on_behavior',
