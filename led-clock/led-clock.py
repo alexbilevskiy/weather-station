@@ -123,19 +123,21 @@ class RunText:
         metrics = self.readMetrics()
         if (not metrics):
             graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO METRICS')
+        else:
+            self.defineBrightness(now, metrics)
+            self.drawTemp(metrics)
+            self.drawForecast(metrics)
+            self.drawHumidity(metrics)
+            self.drawWind(metrics)
+            self.drawPrecip(metrics)
+            self.drawSky(metrics)
+
         hass = self.readHass()
-        if (not hass):
+        if not hass:
             graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO HASS')
+        else:
+            self.drawCo2(hass)
 
-        self.defineBrightness(now, metrics)
-
-        self.drawTemp(metrics)
-        self.drawForecast(metrics)
-        self.drawCo2(hass)
-        self.drawHumidity(metrics)
-        self.drawWind(metrics)
-        self.drawPrecip(metrics)
-        self.drawSky(metrics)
 
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
 
