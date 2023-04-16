@@ -122,7 +122,7 @@ class RunText:
 
         metrics = self.readMetrics()
         if (not metrics):
-            graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO METRICS')
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO METRICS')
         else:
             self.defineBrightness(now, metrics)
             self.drawTemp(metrics)
@@ -134,7 +134,7 @@ class RunText:
 
         hass = self.readHass()
         if not hass:
-            graphics.DrawText(self.canvas, self.fontSm, 1, 25, self.colorW, u'NO HASS')
+            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO HASS')
         else:
             self.drawCo2(hass)
 
@@ -193,7 +193,7 @@ class RunText:
 
     def drawCo2(self, hass):
         if 'co2_ppm_cm11' in hass and hass['co2_ppm_cm11']:
-            co2text = u'{0}p'.format(int(int(metrics['sensors']['co2_ppm_cm11'])/1))
+            co2text = u'{0}p'.format(int(hass['co2_ppm_cm11']))
         else:
             co2text = 'N/A'
         width = len(co2text) * self.fontSmW
@@ -504,8 +504,7 @@ class RunText:
             resp = requests.get(self.config['metrics_url'])
         except Exception as e:
             print("Cannot load metrics: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS ERROR')
-            return self.metrics
+            return None
 
         if not resp:
             return False
@@ -513,8 +512,8 @@ class RunText:
             metrics = resp.json()
         except Exception as e:
             print("Invalid metrics `{0}`: {1}".format(resp.text, str(e)))
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'METRICS INVALID')
-            return self.metrics
+            return None
+
         self.metricsUpdated = now
         self.metrics = metrics
 
@@ -535,9 +534,12 @@ class RunText:
             return False
 
         hass = None
-        for line in resp.text.split("\n"):
-            m = re.match('hass_sensor_carbon_dioxide_ppm{domain="sensor",entity="sensor.co2_cm11",friendly_name="CO₂ cm11"} ([0-9.]+)$', line)
-            if not m:
+        prom = resp.content.decode('utf-8')
+        for line in prom.split("\n"):
+            if not "hass_sensor_carbon_dioxide_ppm" in line:
+                continue
+            m = re.match('hass_sensor_carbon_dioxide_ppm{domain="sensor",entity="sensor.co2_cm11",friendly_name="CO₂ cm11"} ([0-9.]+)', line)
+            if m is None:
                 continue
             hass = {"co2_ppm_cm11": m.group(1)}
 
