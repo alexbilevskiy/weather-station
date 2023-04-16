@@ -19,15 +19,6 @@ class exporter:
                 'day_length': None,
                 'day_percent': None,
             },
-            'sensors': {
-                'co2_ppm': None,
-                'co2_ppm_cm11': None,
-                'uptime_02': None,
-                'esp02_fail': 0,
-                'esp02_updated': 0,
-                'size': 0,
-                'lag': 0,
-            },
             'devices': {},
             'yandex': {
                 'fact': {},
@@ -56,14 +47,6 @@ class exporter:
             self.metrics['custom']['datetime'] = date
             self.metrics['custom']['utime'] = utime
 
-            self.metrics['sensors']['esp02_fail'] = 0
-            try:
-                self.metrics['sensors']['esp02_updated']
-                if self.metrics['sensors']['esp02_updated'] < self.metrics['custom']['utime'] - 60:
-                    self.metrics['sensors']['esp02_fail'] = 1
-                    self.metrics['devices']['ESP_air']['state'] = 0
-            except:
-                self.metrics['sensors']['esp02_fail'] = 1
 
             # for devicekey in self.metrics['devices']:
             #     if 'updated' not in self.metrics['devices'][devicekey]:
@@ -75,69 +58,6 @@ class exporter:
             self.readTraffic()
             self.mc.set('metrics', json.dumps(self.metrics), 300)
             time.sleep(0.5)
-
-    def readEsp02(self, esp_data):
-        temp = {
-            'co2_ppm_s8': {'v': 0, 't': 'float'},
-            'co2_s1': {'v': 0, 't': 'fixed'},
-            'co2_s2': {'v': 0, 't': 'fixed'},
-            'co2_s3': {'v': 0, 't': 'fixed'},
-            'co2_abc': {'v': 0, 't': 'fixed'},
-            'co2_flags': {'v': 0, 't': 'fixed'},
-            'co2_ppm_cm11': {'v': 0, 't': 'float'},
-        }
-        try:
-            temp['co2_ppm_s8']['v'] = esp_data['co2_ppm_s8']
-            temp['co2_ppm_cm11']['v'] = esp_data['co2_ppm_cm11']
-            temp['co2_s1']['v'] = esp_data['co2_s1']
-            temp['co2_s2']['v'] = esp_data['co2_s2']
-            temp['co2_s3']['v'] = esp_data['co2_s3']
-            temp['co2_abc']['v'] = esp_data['co2_abc']
-            temp['co2_flags']['v'] = esp_data['co2_flags']
-            uptime = esp_data['uptime']
-        except Exception as e:
-            print('Bad rcv unpacked 02: ' + str(esp_data) + ' ' + str(e))
-            self.metrics['sensors']['esp02_fail'] = 1
-            self.metrics['devices']['ESP_air']['state'] = 0
-            return False
-        try:
-            for name in temp:
-                temp[name]['v'] = self.normalize(name, temp[name]['v'], temp[name]['t'])
-        except ValueError as e:
-            print('Cant convert some variables ' + str(esp_data) + ', ' + str(e))
-            self.metrics['sensors']['esp02_fail'] = 1
-            self.metrics['devices']['ESP_air']['state'] = 0
-            return False
-        for name in temp:
-            self.metrics['sensors'][name] = temp[name]['v']
-        self.metrics['sensors']['esp02_updated'] = self.metrics['custom']['utime']
-        self.metrics['sensors']['uptime_02'] = uptime
-        self.metrics['sensors']['esp02_fail'] = 0
-        return self.metrics
-
-    def normalize(self, name, val, paramType ='float'):
-        if name not in self.metrics_dev:
-            self.metrics_dev[name] = []
-
-        if paramType == 'int':
-            val = int(val)
-        elif paramType == 'float':
-            val = float(val)
-
-        self.metrics_devt.append(self.metrics['custom']['utime'])
-        self.metrics_dev[name].append(val)
-        if len(self.metrics_dev[name]) > self.config['sensors_moving_avg_limit']:
-            self.metrics_dev[name].pop(0)
-            self.metrics_devt.pop(0)
-        self.metrics['sensors']['size'] = len(self.metrics_dev[name])
-        self.metrics['sensors']['lag'] = self.metrics['custom']['utime'] - self.metrics_devt[0]
-
-        if paramType == 'int':
-            val = int(round(sum(self.metrics_dev[name])/len(self.metrics_dev[name]), 0))
-        elif paramType == 'float':
-            val = round(sum(self.metrics_dev[name])/len(self.metrics_dev[name]), 1)
-
-        return val
 
     def readTraffic(self):
         cacheKey = 'yandex-traffic'
@@ -332,18 +252,6 @@ class exporter:
         self.mqtt_connect()
 
     def mqtt_message(self, client, userdata, msg):
-        m = re.match('.*?wifi2mqtt/(\w+)$', msg.topic)
-        if m:
-            try:
-                data = json.loads(msg.payload)
-            except Exception as e:
-                print("Failed to decode {0} `{1}`: {2}".format(msg.topic, str(msg.payload), str(e)))
-                return
-            self.readZigbee(m.group(1), data)
-            if m.group(1) == 'ESP_air_02':
-                self.readEsp02(data)
-            return
-
         m = re.match('.*?zigbee2mqtt/(\w+)$', msg.topic)
         if m:
             data = json.loads(msg.payload)

@@ -10,11 +10,6 @@ help = {
     'custom.day_length': {'title': 'Day lenngth', 'key': 'day_length'},
     'custom.day_percent': {'title': 'Day percent', 'key': 'day_percent'},
 
-    'sensors.uptime_02': {'title': 'Uptime ESP02', 'key': 'uptime_02'},
-    'sensors.esp02_fail': {'title': 'ESP02 error', 'key': 'esp02_fail'},
-    'sensors.lag': {'title': 'Metrics lag', 'key': 'lag'},
-    'sensors.size': {'title': 'Metrics size', 'key': 'size'},
-
     'yandex.fact.feels_like': {'title': 'Yandex temperature feels like', 'key': 't_ya_feel'},
     'yandex.fact.temp': {'title': 'Yandex real temperature', 'key': 't_ya_real'},
     'yandex.fact.condition': {'title': 'Yandex weather condition', 'key': 'ya_condition', "name_as_key": True},
