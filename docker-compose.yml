@@ -1,4 +1,4 @@
-version: '3'
+version: '3.3'
 services:
   homeassistant:
     container_name: homeassistant
@@ -10,6 +10,8 @@ services:
     restart: unless-stopped
     privileged: true
     network_mode: host
+    depends_on:
+      - mosquitto
 
   zigbee2mqtt:
     container_name: zigbee2mqtt
@@ -21,3 +23,50 @@ services:
     devices:
       - /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0:/dev/ttyUSB0
     network_mode: host
+    depends_on:
+      - mosquitto
+
+  mktxp:
+    container_name: mktxp
+    image: ghcr.io/akpw/mktxp:latest
+    volumes:
+      - /opt/docker-data/mktxp:/root/mktxp/
+    restart: unless-stopped
+    network_mode: host
+    user: root
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:linux-arm
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/docker-data/portainer:/data
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    volumes:
+      - /opt/docker-data/mosquitto/config:/mosquitto/config
+      - /opt/docker-data/mosquitto/data:/mosquitto/data
+      - /opt/docker-data/mosquitto/log:/mosquitto/log
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /opt/docker-data/grafana/config:/etc/grafana
+      - /opt/docker-data/grafana/data:/var/lib/grafana
+
+  memcached:
+    container_name: memcached
+    image: memcached
+    network_mode: host
+
