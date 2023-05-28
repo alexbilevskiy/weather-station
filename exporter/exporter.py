@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -B
 # coding: UTF-8
-import time, datetime, os, json, memcache, random, requests, re
+import time, datetime, json, memcache, requests
 
 class exporter:
     def __init__(self):
@@ -8,19 +8,12 @@ class exporter:
         self.metrics_dev = {}
         self.metrics = {
             'custom': {
-                'datetime': None,
-                'utime': None,
                 'traf_from': None,
                 'traf_to': None,
                 'traf_updated': None,
-                'day_length': None,
-                'day_percent': None,
             },
-            'devices': {},
             'yandex': {
-                'fact': {},
                 'radar': {},
-                'forecast': {},
                 'updated': None,
             },
         }
@@ -36,12 +29,6 @@ class exporter:
             self.metrics = json.loads(existing)
 
         while True:
-            now = datetime.datetime.now()
-            date = now.strftime("%Y-%m-%d %H:%M:%S")
-            utime = int(now.strftime("%s"))
-            self.metrics['custom']['datetime'] = date
-            self.metrics['custom']['utime'] = utime
-
             self.readYandex()
             self.readTraffic()
             self.mc.set('metrics', json.dumps(self.metrics), 300)
@@ -77,63 +64,7 @@ class exporter:
             self.metrics['custom']['traf_to'] = 0
 
     def readYandex(self):
-        keys = self.config['yandex_weather_keys']
-        cacheKey = 'yandex-weather'
         cacheKeyRadar = 'yandex-weather-radar'
-        cacheKeyBad = 'yandex-weather-bad'
-        w = self.mc.get(cacheKey)
-        if self.mc.get(cacheKeyBad):
-            print("weather broken")
-            return self.metrics
-
-        if w:
-            w = json.loads(w)
-        else:
-            print("load weather")
-            now = datetime.datetime.now()
-            date = now.strftime("%Y-%m-%d %H:%M:%S")
-            url = self.config['yandex_weather_url']
-            headers = {'X-Yandex-API-Key': random.choice(keys)}
-            try:
-                resp = requests.get(url, headers=headers)
-            except Exception as e:
-                print(date + ' yandex errror: ' + str(e))
-                return self.metrics
-            w = resp.json()
-            if not ('fact' in w):
-                print(date + ' Bad yandex response: ' + resp.text)
-                self.mc.set(cacheKeyBad, True, 300)
-                return self.metrics
-
-            print(date + ' yandex weather loaded')
-            w['updated'] = int(now.strftime("%s"))
-            self.mc.set(cacheKey, json.dumps(w), 1800)
-
-        if type(w['forecast']['parts']) == dict:
-            parts = []
-            for partKey in w['forecast']['parts']:
-                part = w['forecast']['parts'][partKey]
-                part['part_name'] = partKey
-                parts.append(part)
-            w['forecast']['parts'] = parts
-
-        self.metrics['yandex']['fact'] = w['fact']
-        self.metrics['yandex']['forecast'] = w['forecast']
-        self.metrics['yandex']['updated'] = w['updated']
-
-        for f in w['forecast']['parts']:
-            p = self.config['icons_path']
-            icon = p + f['icon'] + '.png'
-            if os.path.isfile(icon):
-                continue
-            print('loading icon ' + f['icon'])
-            url = self.config['icons_url_format'].format(f['icon'])
-            resp = requests.get(url, timeout=5)
-            f = open(icon, 'wb')
-            f.write(resp.content)
-            f.close()
-            print('loaded icon ' + icon)
-
         r = self.mc.get(cacheKeyRadar)
         if r:
             cur = json.loads(r)
@@ -155,15 +86,6 @@ class exporter:
             print('yandex radar bad cached: ' + str(cur))
             return self.metrics
         self.metrics['yandex']['radar'] = cur['alert']
-
-        sr = datetime.datetime.strptime(w['forecast']['sunrise'], '%H:%M')
-        ss = datetime.datetime.strptime(w['forecast']['sunset'], '%H:%M')
-        dayLen = (ss-sr).total_seconds()
-        curTime = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'), '%H:%M')
-        perc = (curTime-sr).total_seconds() / dayLen
-
-        self.metrics['custom']['day_length'] = dayLen
-        self.metrics['custom']['day_percent'] = perc
 
         return self.metrics
 

@@ -7,17 +7,7 @@ metrics = json.loads(metrics)
 help = {
     'custom.traf_from': {'title': 'Traffic: to metro', 'key': 'traf_from'},
     'custom.traf_to': {'title': 'Traffic: home', 'key': 'traf_to'},
-    'custom.day_length': {'title': 'Day lenngth', 'key': 'day_length'},
-    'custom.day_percent': {'title': 'Day percent', 'key': 'day_percent'},
 
-    'yandex.fact.feels_like': {'title': 'Yandex temperature feels like', 'key': 't_ya_feel'},
-    'yandex.fact.temp': {'title': 'Yandex real temperature', 'key': 't_ya_real'},
-    'yandex.fact.condition': {'title': 'Yandex weather condition', 'key': 'ya_condition', "name_as_key": True},
-    'yandex.fact.icon': {'title': 'Yandex weather icon', 'key': 'ya_icon', "name_as_key": True},
-    'yandex.fact.wind_dir': {'title': 'Yandex wind direction', 'key': 'ya_w_direction', "name_as_key": True},
-    'yandex.fact.humidity': {'title': 'Yandex humidity real', 'key': 'h_ya'},
-    'yandex.fact.pressure_pa': {'title': 'Yandex pressure in mBar', 'key': 'pr_ya_pa'},
-    'yandex.fact.wind_speed': {'title': 'Yandex wind speed m/s', 'key': 'ya_w_speed'},
     'yandex.radar.current.prec_strength': {'title': 'Precipitation strength', 'key': 'prec_strength'},
     'yandex.radar.current.prec_type': {'title': 'Precipitation type', 'key': 'prec_type'},
     'yandex.radar.current.cloudness': {'title': 'Cloudness', 'key': 'cloudness'},

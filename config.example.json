@@ -1,11 +1,4 @@
 {
   "traffic_url": "",
-  "sensors_moving_avg_limit": 50,
-  "yandex_radar_url": "https://yandex.ru/pogoda/front/maps/prec-alert?lat=55.75396&lon=37.620393&lang=ru&map=0&timeline=0&alert=1",
-  "yandex_weather_web_url": "https://yandex.ru/pogoda/moscow?ta_features=favorites%3Bsgn&turboapp=1",
-  "yandex_weather_url": "https://api.weather.yandex.ru/v1/informers?lat=55.75396&lon=37.620393",
-  "yandex_weather_keys": [
-  ],
-  "icons_path": "/opt/src/station/icons/",
-  "icons_url_format": "https://yastatic.net/weather/i/icons/blueye/24/{0}.png"
+  "yandex_radar_url": "https://yandex.ru/pogoda/front/maps/prec-alert?lat=55.75396&lon=37.620393&lang=ru&map=0&timeline=0&alert=1"
 }
