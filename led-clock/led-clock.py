@@ -125,10 +125,7 @@ class RunText:
             graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO METRICS')
         else:
             self.defineBrightness(now, metrics)
-            self.drawTemp(metrics)
             self.drawForecast(metrics)
-            self.drawHumidity(metrics)
-            self.drawWind(metrics)
             self.drawPrecip(metrics)
             self.drawSky(metrics)
 
@@ -136,6 +133,9 @@ class RunText:
         if not hass:
             graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO HASS')
         else:
+            self.drawTemp(hass)
+            self.drawHumidity(hass)
+            self.drawWind(hass)
             self.drawCo2(hass)
 
 
@@ -192,27 +192,41 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 25, self.clockPos[1], self.colorW, m)
 
     def drawCo2(self, hass):
-        if 'co2_ppm_cm11' in hass and hass['co2_ppm_cm11']:
-            co2text = u'{0}p'.format(int(float(hass['co2_ppm_cm11'])))
+        dev_co2 = self.config['devices']['co2_level']
+        if dev_co2['id'] in hass:
+            co2text = u'{0}p'.format(int(float(hass[dev_co2['id']]['state'])))
         else:
             co2text = 'N/A'
         width = len(co2text) * self.fontSmW
         coords = self.getCoords('co2', self.co2Pos[1], width, self.fontSmH, 'left', [255, 0, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.co2Pos[1], self.co2Color, co2text)
 
-    def drawHumidity(self, metrics):
+    def drawHumidity(self, hass):
         dev_hum = self.config['devices']['humidity_inside']
-        try:
-            hinText = u'{0}%'.format(int(round(metrics['devices'][dev_hum['id']][dev_hum['field']], 0)))
-        except:
+        if dev_hum['id'] in hass:
+            hinText = u'{0}%'.format(int(round(float(hass[dev_hum['id']]['state']), 0)))
+        else:
             hinText = 'N/A'
         width = len(hinText) * self.fontSmW
         coords = self.getCoords('hum', self.humPos[1], width, self.fontSmH, color=[255, 100, 100], a='left')
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.humPos[1], self.humColor, hinText)
 
-    def drawWind(self, metrics):
+    def drawWind(self, hass):
+        dev_wind_speed = self.config['devices']['wind_speed']
+        dev_wind_bearing = self.config['devices']['wind_bearing']
+        WIND_DIRECTION_MAPPING = {
+            315: "nw",
+            360: "n",
+            45: "ne",
+            90: "e",
+            135: "se",
+            180: "s",
+            225: "sw",
+            270: "w",
+            0: "c",
+        }
         try:
-            windSpeedText = u'{1}{0}'.format(int(round(metrics['yandex']['fact']['wind_speed'], 0)), metrics['yandex']['fact']['wind_dir'])
+            windSpeedText = u'{1}{0}'.format(int(round(float(hass[dev_wind_speed['id']]['attributes'][dev_wind_speed['attr']]), 0)), WIND_DIRECTION_MAPPING[hass[dev_wind_bearing['id']]['attributes'][dev_wind_bearing['attr']]])
         except:
             windSpeedText = 'N/A'
 
@@ -220,11 +234,11 @@ class RunText:
         coords = self.getCoords('wind', self.windSpPos[1], width, self.fontSmH, a='right', color=[100, 255, 150], padding=0)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.windSpPos[1], self.windColor, windSpeedText)
 
-    def drawTemp(self, metrics):
-        dev_in = self.config['devices']['temp_inside']
-        try:
-            r, d = str(round(metrics['devices'][dev_in['id']][dev_in['field']], 1)).split('.')
-        except:
+    def drawTemp(self, hass):
+        dev_temp_in = self.config['devices']['temp_inside']
+        if dev_temp_in['id'] in hass:
+            r, d = str(round(float(hass[dev_temp_in['id']]['state']), 1)).split('.')
+        else:
             r = 'N/'
             d = 'A'
 
@@ -237,13 +251,14 @@ class RunText:
 
         if int(datetime.datetime.now().strftime("%s")) % 10 >= 5:
             dev_out = self.config['devices']['temp_outside']
-            try:
-                temp = int(round(metrics['devices'][dev_out['id']][dev_out['field']], 0))
-            except:
+            if dev_out['id'] in hass:
+                temp = int(round(float(hass[dev_out['id']]['state']), 0))
+            else:
                 temp = None
             col = self.outsideTempColor
         else:
-            temp = metrics['yandex']['fact']['temp']
+            dev_out = self.config['devices']['temp_outside_provided']
+            temp = int(round(float(hass[dev_out['id']]['attributes'][dev_out['attr']]), 0))
             col = self.outsideTempYaColor
 
         if temp is not None:
@@ -533,20 +548,20 @@ class RunText:
         if not resp:
             return False
 
-        hass = None
-        prom = resp.content.decode('utf-8')
-        for line in prom.split("\n"):
-            if not "hass_sensor_carbon_dioxide_ppm" in line:
-                continue
-            m = re.match('hass_sensor_carbon_dioxide_ppm{domain="sensor",entity="sensor.co2_cm11",friendly_name="CO₂ cm11"} ([0-9.]+)', line)
-            if m is None:
-                continue
-            hass = {"co2_ppm_cm11": m.group(1)}
+        try:
+            hass = resp.json()
+        except Exception as e:
+            print("Invalid hass states `{0}`: {1}".format(str(e), resp.text))
+            return None
+
+        hassAssoc = {}
+        for entity in hass:
+            hassAssoc[entity['entity_id']] = entity
 
         self.hassUpdated = now
-        self.hass = hass
+        self.hass = hassAssoc
 
-        return hass
+        return hassAssoc
 
     def mqttLoop(self):
         if not self.config['mqtt']['enabled']:
