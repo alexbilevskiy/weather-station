@@ -69,4 +69,4 @@ services:
     container_name: memcached
     image: memcached
     network_mode: host
-
+    restart: unless-stopped
