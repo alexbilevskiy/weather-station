@@ -73,8 +73,6 @@ class RunText:
         self.matrix = RGBMatrix(options = options)
         self.canvas = self.matrix.CreateFrameCanvas()
 
-        self.metricsUpdated = 0
-        self.metrics = None
         self.hassUpdated = 0
         self.hass = None
 
@@ -120,23 +118,22 @@ class RunText:
 
         self.mqttLoop()
 
-        metrics = self.readMetrics()
-        if (not metrics):
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO METRICS')
-        else:
-            self.defineBrightness(now, metrics)
-            self.drawForecast(metrics)
-            self.drawPrecip(metrics)
-            self.drawSky(metrics)
-
         hass = self.readHass()
         if not hass:
             graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO HASS')
         else:
+            self.defineBrightness(now, hass)
             self.drawTemp(hass)
             self.drawHumidity(hass)
             self.drawWind(hass)
             self.drawCo2(hass)
+            self.drawSky(hass)
+
+            #not implemented yet
+            #self.drawForecast(hass)
+
+            #requires yandex "radar" sensor
+            #self.drawPrecip(hass)
 
 
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
@@ -327,50 +324,20 @@ class RunText:
                     continue
                 self.canvas.SetPixel(x + posX, y + posY, self.c(r*0.7), self.c(g*0.7), self.c(b*0.7))
 
-    def drawSky(self, metrics):
-        try:
-            metrics['yandex']['forecast']['sunrise']
-        except TypeError:
-            self.canvas.SetPixel(0, 0, 255, 0, 0)
-            return
-        dot = int(round(round(self.ledW * metrics['custom']['day_percent'])))
+    def drawSky(self, hass):
+        dev_sun = self.config['devices']['sun']
+        sun = hass[dev_sun['id']]
+
+        sr = datetime.datetime.fromisoformat(sun['attributes']['next_rising'])
+        ss = datetime.datetime.fromisoformat(sun['attributes']['next_setting'])
+        dayLen = (ss-sr).total_seconds()
+        curTime = datetime.datetime.now()
+        perc = (curTime.timestamp()+86400-sr.timestamp()) / dayLen
+
+        dot = int(round(round(self.ledW * perc)))
         self.canvas.SetPixel(dot, 0, 255, 150, 0)
         self.canvas.SetPixel(dot-1, 0, 255, 150, 0)
         self.canvas.SetPixel(dot+1, 0, 255, 150, 0)
-
-        self.drawSkyBorder(metrics)
-
-    def drawSkyBorder(self, metrics):
-        return
-        sky = []
-        for x in range(0,self.ledW-1):
-            sky.append([x,0])
-        for y in range(0,self.ledH-1):
-            sky.append([self.ledW-1,y])
-        for x in range(self.ledW-1, 0, -1):
-            sky.append([x,self.ledH-1])
-        for y in range(self.ledH-1, 0, -1):
-            sky.append([0,y])
-
-        ofs = int(2.0/12.0 * len(sky))
-        for i in range(0, ofs):
-            a = sky.pop(i)
-            sky.append(a)
-        for dot in sky:
-            pass
-            #self.canvas.SetPixel(dot[0], dot[1], 100,100,100)
-
-        day = (86400 - metrics['custom']['day_length']) / 86400.0 * 360
-
-        ss = day / 2
-        pos = int(round(ss/360.0 * (len(sky) - 1)))
-        self.canvas.SetPixel(sky[pos][0], sky[pos][1], 100,0,0)
-
-        sr = -day / 2
-        pos = int(round(sr/360.0 * (len(sky) - 1)))
-        self.canvas.SetPixel(sky[pos][0], sky[pos][1], 100,0,0)
-
-        #cur = ss * metrics['ya_current']['day_length']
 
     def drawPrecip(self, metrics):
         # metrics['yandex']['radar']['current']['prec_type'] = 2
@@ -475,7 +442,7 @@ class RunText:
             return 'e'
         return n
 
-    def defineBrightness(self, now, metrics):
+    def defineBrightness(self, now, hass):
         if self.userBrightness:
             if self.userBrightness == 1:
                 self.matrix.brightness = 2
@@ -486,15 +453,16 @@ class RunText:
             self.initColors()
             return
         self.bri = 1
+        dev_sun = self.config['devices']['sun']
         if 0 <= now.hour < 6:
-            if metrics['yandex']['fact']['daytime'] == 'n':
+            if hass[dev_sun['id']]['state'] == 'below_horizon':
                 self.bri = 0.5
                 self.matrix.brightness = 2
             else:
                 self.bri = 1
                 self.matrix.brightness = 20
         elif 6 <= now.hour < 9:
-            if metrics['yandex']['fact']['daytime'] == 'n':
+            if hass[dev_sun['id']]['state'] == 'below_horizon':
                 self.bri = 1
                 self.matrix.brightness = 20
             else:
@@ -511,29 +479,6 @@ class RunText:
             self.matrix.brightness = 60
         self.initColors()
 
-    def readMetrics(self):
-        now = time.time()
-        if self.metricsUpdated + self.config['metrics_period'] > now:
-            return self.metrics
-        try:
-            resp = requests.get(self.config['metrics_url'])
-        except Exception as e:
-            print("Cannot load metrics: {0}".format(str(e)))
-            return None
-
-        if not resp:
-            return False
-        try:
-            metrics = resp.json()
-        except Exception as e:
-            print("Invalid metrics `{0}`: {1}".format(resp.text, str(e)))
-            return None
-
-        self.metricsUpdated = now
-        self.metrics = metrics
-
-        return metrics
-
     def readHass(self):
         now = time.time()
         if self.hassUpdated + self.config['metrics_period'] > now:
@@ -543,7 +488,7 @@ class RunText:
         except Exception as e:
             print("Cannot load hass: {0}".format(str(e)))
             graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'HASS ERROR')
-            return self.metrics
+            return None
 
         if not resp:
             return False

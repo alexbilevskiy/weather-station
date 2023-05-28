@@ -1,5 +1,4 @@
 {
-  "metrics_url": "http://localhost/metrics_raw.py",
   "metrics_period": 60,
   "mqtt": {
     "enabled": true,
@@ -30,6 +29,9 @@
     },
     "co2_level": {
       "id" : "sensor.co2_cm11"
+    },
+    "sun": {
+      "id": "sun.sun"
     }
   },
   "hass": {
