@@ -192,39 +192,6 @@ class exporter:
         self.metrics['devices'][topic] = data
         self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
 
-    def readR4sValue(self, deviceId, field, value):
-        if field == 'nightlight_rgb' or field == 'rgb' or field == 'ip' or field == 'st_jpg_url' or field == 'st_jpg_url':
-            return
-        if type(value) == int:
-            # nothing to do
-            pass
-        elif type(value) == bytes:
-            value = value.decode('utf-8')
-
-        if field == 'total_energy':
-            value = float(value)
-        elif field == 'working_time':
-            h, m, s = map(int, value.split(':'))
-            value = h * 3600 + m * 60 + s
-
-        if type(value) == str:
-            if value.isdigit():
-                value = int(value)
-            elif is_float(value):
-                value = float(value)
-            else:
-                if re.match('^-?\d+$', value):
-                    value = int(value)
-                elif re.match('^on(line)?$', value, flags=re.IGNORECASE):
-                    value = 1
-                elif re.match('^off(line)?$', value, flags=re.IGNORECASE):
-                    value = 0
-
-        # print("R4S DEVICE {0}: {1} [{2}]".format(deviceId, field, value))
-        if deviceId not in self.metrics['devices']:
-            self.metrics['devices'][deviceId] = {}
-        self.metrics['devices'][deviceId][field] = value
-
     def convertState(self, value):
         if value == 'ON':
             return 1
@@ -243,9 +210,6 @@ class exporter:
         print("Connected with result code "+str(rc))
         self.mqcl.subscribe('wifi2mqtt/#')
         self.mqcl.subscribe('zigbee2mqtt/#')
-        self.mqcl.subscribe('r4s/#')
-        self.mqcl.subscribe('r4s0/#')
-        self.mqcl.subscribe('r4s1/#')
 
     def mqtt_disconnected(self, client, rc):
         print("Disconnected with result code " + str(rc))
@@ -268,25 +232,6 @@ class exporter:
             self.readZigbee(m.group(1), data)
             return
 
-        # r4s/f4ad35a94031/rssi
-        # r4s/f4ad35a94031/rsp/json
-        m = re.match('^r4s\d*/(\w+?)/(?:rsp/)?(\w+)$', msg.topic)
-        if m:
-            if m.group(2) == 'json':
-                data = json.loads(msg.payload)
-                for field in data:
-                    self.readR4sValue(m.group(1), field, data[field])
-                return
-            self.readR4sValue(m.group(1), m.group(2), msg.payload)
-            return
-        m = re.match('^r4s0/(\w+?)$', msg.topic)
-        if m:
-            self.readR4sValue("r4sgate", m.group(1), msg.payload)
-            return
-        m = re.match('^r4s1/(\w+?)$', msg.topic)
-        if m:
-            self.readR4sValue("r4sgate1", m.group(1), msg.payload)
-            return
         #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
 
