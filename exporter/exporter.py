@@ -1,12 +1,9 @@
 #!/usr/bin/python3 -B
 # coding: UTF-8
 import time, datetime, os, json, memcache, random, requests, re
-import paho.mqtt.client as mqtt
 
 class exporter:
     def __init__(self):
-        self.mqtt_connect()
-
         self.metrics_devt = []
         self.metrics_dev = {}
         self.metrics = {
@@ -39,21 +36,12 @@ class exporter:
             self.metrics = json.loads(existing)
 
         while True:
-            for i in range(1, 5):
-                self.mqcl.loop(0)
             now = datetime.datetime.now()
             date = now.strftime("%Y-%m-%d %H:%M:%S")
             utime = int(now.strftime("%s"))
             self.metrics['custom']['datetime'] = date
             self.metrics['custom']['utime'] = utime
 
-
-            # for devicekey in self.metrics['devices']:
-            #     if 'updated' not in self.metrics['devices'][devicekey]:
-            #         continue
-            #     if self.metrics['devices'][devicekey]['updated'] < utime - 300:
-            #         self.metrics['devices'].pop("device")
-            #         print('would remove devie {0}'.format(devicekey))
             self.readYandex()
             self.readTraffic()
             self.mc.set('metrics', json.dumps(self.metrics), 300)
@@ -178,71 +166,6 @@ class exporter:
         self.metrics['custom']['day_percent'] = perc
 
         return self.metrics
-
-    def readZigbee(self, topic, data):
-        for f in data:
-            if f.find('state') == 0:
-                data[f] = self.convertState(data[f])
-
-        try:
-            data.pop('update')
-            data.pop('update_available')
-        except:
-            pass
-        self.metrics['devices'][topic] = data
-        self.metrics['devices'][topic]['updated'] = self.metrics['custom']['utime']
-
-    def convertState(self, value):
-        if value == 'ON':
-            return 1
-        return 0
-
-    def mqtt_connect(self):
-        print("Connecting mqtt")
-        self.mqcl = mqtt.Client("exporter")
-        self.mqcl.enable_logger()
-        self.mqcl.on_connect = self.mqtt_connected
-        self.mqcl.on_message = self.mqtt_message
-        self.mqcl.on_disconnect = self.mqtt_disconnected
-        self.mqcl.connect("localhost", 1883, 60)
-
-    def mqtt_connected(self, client, userdata, flags, rc):
-        print("Connected with result code "+str(rc))
-        self.mqcl.subscribe('wifi2mqtt/#')
-        self.mqcl.subscribe('zigbee2mqtt/#')
-
-    def mqtt_disconnected(self, client, rc):
-        print("Disconnected with result code " + str(rc))
-        self.mqtt_connect()
-
-    def mqtt_message(self, client, userdata, msg):
-        m = re.match('.*?wifi2mqtt/(\w+)$', msg.topic)
-        if m:
-            try:
-                data = json.loads(msg.payload)
-            except Exception as e:
-                print("Failed to decode {0} `{1}`: {2}".format(msg.topic, str(msg.payload), str(e)))
-                return
-            self.readZigbee(m.group(1), data)
-            return
-
-        m = re.match('.*?zigbee2mqtt/(\w+)$', msg.topic)
-        if m:
-            data = json.loads(msg.payload)
-            self.readZigbee(m.group(1), data)
-            return
-
-        #print('MQTT SKIP: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
-
-
-def is_float(value):
-    if value is None:
-        return False
-    try:
-        float(value)
-        return True
-    except:
-        return False
 
 if __name__ == "__main__":
     exporter = exporter()
