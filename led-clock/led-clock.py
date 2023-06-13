@@ -125,11 +125,10 @@ class RunText:
             self.defineBrightness(now, hass)
             self.drawTemp(hass)
             self.drawHumidity(hass)
+            self.drawForecast(hass)
             self.drawWind(hass)
             self.drawCo2(hass)
             self.drawSky(hass)
-
-            self.drawForecast(hass)
 
             #requires yandex "radar" sensor
             #self.drawPrecip(hass)
@@ -281,7 +280,7 @@ class RunText:
             return
 
         #self.formatDayTime(metrics['yandex']['forecast']['parts'][0]['part_name'])
-        fc1 = u'{0}{1}'.format('.', int(round(hass[dev_forecast['id']]['attributes']['forecast'][0]['temperature'])))
+        fc1 = u'{0}{1}'.format(' ', int(round(hass[dev_forecast['id']]['attributes']['forecast'][0]['temperature'])))
         width = len(fc1) * self.fontSmW + 2 # corection for "°"
         coords = self.getCoords('weather1', self.forecastPos[1], width, self.fontSmH, a='right', color=[100, 100, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1], c, fc1)
@@ -290,7 +289,7 @@ class RunText:
         coords = self.getCoords('weather1_icon', self.forecastPos[1], self.imgW, self.imgH, a='right', color=[255, 100, 255])
         self.drawImage(self.getIcon(hass[dev_forecast['id']]['attributes']['forecast_icons'][0]), coords['x'], coords['y'])
 
-        fc2 = u'{0}{1}'.format('.', int(round(hass[dev_forecast['id']]['attributes']['forecast'][1]['temperature'])))
+        fc2 = u'{0}{1}'.format(' ', int(round(hass[dev_forecast['id']]['attributes']['forecast'][1]['temperature'])))
         width = len(fc2) * self.fontSmW + 2 # corection for "°"
         coords = self.getCoords('weather2', self.forecastPos[1] + 8, width, self.fontSmH, a='right', color=[100, 100, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1] + 8, c, fc2)
