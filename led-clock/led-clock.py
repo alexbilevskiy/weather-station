@@ -129,8 +129,7 @@ class RunText:
             self.drawCo2(hass)
             self.drawSky(hass)
 
-            #not implemented yet
-            #self.drawForecast(hass)
+            self.drawForecast(hass)
 
             #requires yandex "radar" sensor
             #self.drawPrecip(hass)
@@ -275,29 +274,30 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + ofs, self.tempPos[1] + 7, col, tempStr)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.tempPos[1] + 7, col, u'°')
 
-    def drawForecast(self, metrics):
+    def drawForecast(self, hass):
         c = self.forecastColor
-        if not metrics['yandex']['forecast'] or len(metrics['yandex']['forecast']['parts']) <= 0:
-            graphics.DrawText(self.canvas, self.fontSm, self.forecastPos[0], self.forecastPos[1], c, 'NO WEATHER')
+        dev_forecast = self.config['devices']['forecast']
+        if dev_forecast['id'] not in hass:
             return
 
-        fc1 = u'{0}{1}'.format(self.formatDayTime(metrics['yandex']['forecast']['parts'][0]['part_name']), metrics['yandex']['forecast']['parts'][0]['temp_avg'])
+        #self.formatDayTime(metrics['yandex']['forecast']['parts'][0]['part_name'])
+        fc1 = u'{0}{1}'.format('.', int(round(hass[dev_forecast['id']]['forecast'][0]['temperature'])))
         width = len(fc1) * self.fontSmW + 2 # corection for "°"
         coords = self.getCoords('weather1', self.forecastPos[1], width, self.fontSmH, a='right', color=[100, 100, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1], c, fc1)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.forecastPos[1], c, u'°')
 
         coords = self.getCoords('weather1_icon', self.forecastPos[1], self.imgW, self.imgH, a='right', color=[255, 100, 255])
-        self.drawImage(self.getIcon(metrics['yandex']['forecast']['parts'][0]['icon']), coords['x'], coords['y'])
+        self.drawImage(self.getIcon(hass[dev_forecast['id']]['forecast_icons'][0]), coords['x'], coords['y'])
 
-        fc2 = u'{0}{1}'.format(self.formatDayTime(metrics['yandex']['forecast']['parts'][1]['part_name']), metrics['yandex']['forecast']['parts'][1]['temp_avg'])
+        fc2 = u'{0}{1}'.format('.', int(round(hass[dev_forecast['id']]['forecast'][1]['temperature'])))
         width = len(fc2) * self.fontSmW + 2 # corection for "°"
         coords = self.getCoords('weather2', self.forecastPos[1] + 8, width, self.fontSmH, a='right', color=[100, 100, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1] + 8, c, fc2)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.forecastPos[1] + 8, c, u'°')
 
         coords = self.getCoords('weather2_icon', self.forecastPos[1] + 8, self.imgW, self.imgH, a='right', color=[255, 100, 255])
-        self.drawImage(self.getIcon(metrics['yandex']['forecast']['parts'][1]['icon']), coords['x'], coords['y'])
+        self.drawImage(self.getIcon(hass[dev_forecast['id']]['forecast_icons'][1]), coords['x'], coords['y'])
 
     def getIcon(self, iconName):
         #https://yastatic.net/weather/i/icons/islands/32/

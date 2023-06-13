@@ -15,11 +15,14 @@
     },
     "wind_speed": {
       "id": "weather.yandex_weather",
-      "attr": "wind_gust"
+      "attr": "wind_speed"
     },
     "wind_bearing": {
       "id": "weather.yandex_weather",
       "attr": "wind_bearing"
+    },
+    "forecast": {
+      "id": "weather.yandex_weather"
     },
     "temp_inside": {
       "id" : "sensor.0x00158d0001713dab_temperature"
