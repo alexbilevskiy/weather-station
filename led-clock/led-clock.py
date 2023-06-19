@@ -188,7 +188,7 @@ class RunText:
 
     def drawCo2(self, hass):
         dev_co2 = self.config['devices']['co2_level']
-        if dev_co2['id'] in hass:
+        if dev_co2['id'] in hass and hass[dev_co2['id']]['state'].isnumeric():
             co2text = u'{0}p'.format(int(float(hass[dev_co2['id']]['state'])))
         else:
             co2text = 'N/A'
