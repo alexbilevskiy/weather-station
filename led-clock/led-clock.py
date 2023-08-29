@@ -327,16 +327,38 @@ class RunText:
         dev_sun = self.config['devices']['sun']
         sun = hass[dev_sun['id']]
 
+        curTime = datetime.datetime.now()
+
         sr = datetime.datetime.fromisoformat(sun['attributes']['next_rising'])
         ss = datetime.datetime.fromisoformat(sun['attributes']['next_setting'])
-        dayLen = (ss-sr).total_seconds()
-        curTime = datetime.datetime.now()
-        perc = (curTime.timestamp()+86400-sr.timestamp()) / dayLen
+        dayLen = 0
+        day = True
+        if sr > ss:
+            #day
+            dayLen = (ss-sr).total_seconds()+86400
+        elif sr < ss:
+            #night
+            day = False
+            dayLen = (ss-sr).total_seconds()
+        nightLen = 86400 - dayLen
+
+        if day:
+            r=255
+            g=150
+            b=0
+            perc = (curTime.timestamp() + 86400 - sr.timestamp()) / dayLen
+        else:
+            r=0
+            g=0
+            b=150
+            perc = 1 - (sr.timestamp() - curTime.timestamp()) / nightLen
+
+        #print("dl {0}; perc {1}; cur {2}; sr {3}; ss {4}; day {5}".format(dayLen, perc, curTime.timestamp(), sr.timestamp(), ss.timestamp(), day))
 
         dot = int(round(round(self.ledW * perc)))
-        self.canvas.SetPixel(dot, 0, 255, 150, 0)
-        self.canvas.SetPixel(dot-1, 0, 255, 150, 0)
-        self.canvas.SetPixel(dot+1, 0, 255, 150, 0)
+        self.canvas.SetPixel(dot, 0, r, g, b)
+        self.canvas.SetPixel(dot-1, 0, r, g, b)
+        self.canvas.SetPixel(dot+1, 0, r, g, b)
 
     def drawPrecip(self, metrics):
         # metrics['yandex']['radar']['current']['prec_type'] = 2
