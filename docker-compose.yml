@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.9'
 services:
   homeassistant:
     container_name: homeassistant
@@ -19,6 +19,8 @@ services:
     volumes:
       - /opt/docker-data/zigbee2mqtt:/app/data
       - /run/udev:/run/udev:ro
+    environment:
+      - TZ=Europe/Moscow
     restart: unless-stopped
     devices:
       - /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0:/dev/ttyUSB0
