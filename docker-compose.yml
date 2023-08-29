@@ -11,6 +11,20 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.middlewares.dashboard_stripprefix.stripprefix.prefixes=/traefik"
+      - "traefik.http.middlewares.dashboard_stripprefix.stripprefix.forceslash=true"
+
+      - "traefik.http.routers.dashboard.rule=PathPrefix(`/traefik`) || Headers(`Referer`, `https://${HOST}/traefik/dashboard/`)"
+      - "traefik.http.routers.dashboard.entrypoints=web,websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=dashboard_stripprefix"
+
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.dashboard.tls.domains[0].main=${HOST}"
     volumes:
       - /opt/docker-data/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - /opt/docker-data/traefik/dyn:/etc/traefik/dyn:ro
