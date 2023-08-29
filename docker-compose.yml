@@ -15,7 +15,7 @@ services:
 
   zigbee2mqtt:
     container_name: zigbee2mqtt
-    image: koenkk/zigbee2mqtt:latest-dev
+    image: koenkk/zigbee2mqtt:latest
     volumes:
       - /opt/docker-data/zigbee2mqtt:/app/data
       - /run/udev:/run/udev:ro
