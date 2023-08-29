@@ -4,17 +4,17 @@ services:
     container_name: traefik
     image: traefik:v2.10
     command:
-      - "--api.insecure=true"
-      - "--entrypoints.web.address=:80"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--log.level=DEBUG"
+      - "--configFile=/etc/traefik/traefik.yml"
     extra_hosts:
-      - host.docker.internal:192.168.88.209
+      - host.docker.internal:${INT_IP}
     ports:
       - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
+      - /opt/docker-data/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /opt/docker-data/traefik/dyn:/etc/traefik/dyn:ro
+      - /opt/docker-data/traefik/acme.json:/acme.json
       - /var/run/docker.sock:/var/run/docker.sock
 
   whoami:
@@ -23,7 +23,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=PathPrefix(`/whoami`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.whoami.entrypoints=web,websecure"
+
+      - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+      - "traefik.http.routers.whoami.tls.domains[0].main=${HOST}"
 
   homeassistant:
     container_name: homeassistant
@@ -36,7 +40,12 @@ services:
       # TODO: specify all possible hass path variants
       - "traefik.http.routers.hass.rule=PathPrefix(`/`)"
       - "traefik.http.routers.hass.priority=0"
-      - "traefik.http.routers.hass.entrypoints=web"
+      - "traefik.http.routers.hass.entrypoints=web,websecure"
+
+      - "traefik.http.routers.hass.tls=true"
+      - "traefik.http.routers.hass.tls.certresolver=myresolver"
+      - "traefik.http.routers.hass.tls.domains[0].main=${HOST}"
+
       - "traefik.http.services.hass.loadbalancer.server.port=8123"
     volumes:
       - /opt/docker-data/homeassistant:/config
@@ -55,11 +64,18 @@ services:
       - "8546:8546"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.z2m.rule=PathPrefix(`/z2m/`)"
-      - "traefik.http.routers.z2m.entrypoints=web"
+
       - "traefik.http.middlewares.z2m.stripprefix.prefixes=/z2m"
       - "traefik.http.middlewares.z2m.stripprefix.forceslash=true"
+
+      - "traefik.http.routers.z2m.rule=PathPrefix(`/z2m/`)"
+      - "traefik.http.routers.z2m.entrypoints=web,websecure"
       - "traefik.http.routers.z2m.middlewares=z2m"
+
+      - "traefik.http.routers.z2m.tls=true"
+      - "traefik.http.routers.z2m.tls.certresolver=myresolver"
+      - "traefik.http.routers.z2m.tls.domains[0].main=${HOST}"
+
       - "traefik.http.services.z2m.loadbalancer.server.port=8546"
     volumes:
       - /opt/docker-data/zigbee2mqtt:/app/data
@@ -88,11 +104,18 @@ services:
       - "9000:9000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=PathPrefix(`/portainer`)"
-      - "traefik.http.routers.portainer.entrypoints=web"
+
       - "traefik.http.middlewares.portainer.stripprefix.prefixes=/portainer"
       - "traefik.http.middlewares.portainer.stripprefix.forceslash=false"
+
+      - "traefik.http.routers.portainer.rule=PathPrefix(`/portainer`)"
+      - "traefik.http.routers.portainer.entrypoints=web,websecure"
       - "traefik.http.routers.portainer.middlewares=portainer"
+
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
+      - "traefik.http.routers.portainer.tls.domains[0].main=${HOST}"
+
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
     restart: unless-stopped
     volumes:
@@ -118,11 +141,18 @@ services:
       - "3000:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=PathPrefix(`/grafana`)"
-      - "traefik.http.routers.grafana.entrypoints=web"
+
       - "traefik.http.middlewares.grafana.stripprefix.prefixes=/grafana"
       - "traefik.http.middlewares.grafana.stripprefix.forceslash=false"
+
+      - "traefik.http.routers.grafana.rule=PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana.entrypoints=web,websecure"
       - "traefik.http.routers.grafana.middlewares=grafana"
+
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+      - "traefik.http.routers.grafana.tls.domains[0].main=${HOST}"
+
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     restart: unless-stopped
     volumes:
@@ -139,7 +169,7 @@ services:
     image: umputun/nginx-le:latest
     ports:
       - "81:80"
-      - "443:443"
+      - "4443:443"
     restart: always
     container_name: nginx
     logging:
@@ -166,13 +196,20 @@ services:
       - "5000:5000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frigate.rule=PathPrefix(`/frigate`)"
-      - "traefik.http.routers.frigate.entrypoints=web"
+
       # TODO: does not fully work: https://github.com/blakeblackshear/frigate/issues/4526
       - "traefik.http.middlewares.frigate-strip.stripprefix.prefixes=/frigate"
       - "traefik.http.middlewares.frigate-strip.stripprefix.forceslash=false"
       - "traefik.http.middlewares.frigate-headers.headers.customrequestheaders.X-Ingress-Path=/frigate"
+
+      - "traefik.http.routers.frigate.rule=PathPrefix(`/frigate`)"
+      - "traefik.http.routers.frigate.entrypoints=web,websecure"
       - "traefik.http.routers.frigate.middlewares=frigate-strip,frigate-headers"
+
+      - "traefik.http.routers.frigate.tls=true"
+      - "traefik.http.routers.frigate.tls.certresolver=myresolver"
+      - "traefik.http.routers.frigate.tls.domains[0].main=${HOST}"
+
       - "traefik.http.services.frigate.loadbalancer.server.port=5000"
     shm_size: "256mb"
     devices:
