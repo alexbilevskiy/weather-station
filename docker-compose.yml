@@ -92,3 +92,34 @@ services:
       - TZ=Europe/Moscow
     env_file:
       - nginx.env
+
+  frigate:
+    container_name: frigate
+    privileged: true
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    shm_size: "256mb"
+    network_mode: host
+    devices:
+      - /dev/bus/usb/002/003:/dev/bus/usb/002/003
+      - /dev/bus/usb/002/002:/dev/bus/usb/002/002
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /opt/docker-data/frigate/config:/config
+      - /opt/docker-data/frigate/ffmpeg-n5.1.3-16-g566aa38d98-linuxarm64-gpl-5.1:/usr/lib/btbn-ffmpeg:ro
+      - /media/E/frigate:/media/frigate
+      - /opt/docker-data/frigate/db/:/media/db/
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    environment:
+      FRIGATE_RTSP_PASSWORD: "password"
+
+#  frigate_exporter:
+#    container_name: frigate_exporter
+#    restart: unless-stopped
+#    image: rhysbailey/prometheus-frigate-exporter
+#    network_mode: host
+#    environment:
+#      FRIGATE_STATS_URL: "http://192.168.88.209:5000/api/stats"
