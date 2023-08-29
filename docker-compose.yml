@@ -1,14 +1,49 @@
 version: '3.9'
 services:
+  traefik:
+    container_name: traefik
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--log.level=DEBUG"
+    extra_hosts:
+      - host.docker.internal:192.168.88.209
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  whoami:
+    image: traefik/whoami
+    container_name: traefik-whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=PathPrefix(`/whoami`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+
   homeassistant:
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
+    ports:
+      - "8123:8123"
+    labels:
+      - "traefik.enable=true"
+      # sadly, home assistant does not support working under custom path
+      # TODO: specify all possible hass path variants
+      - "traefik.http.routers.hass.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.hass.priority=0"
+      - "traefik.http.routers.hass.entrypoints=web"
+      - "traefik.http.services.hass.loadbalancer.server.port=8123"
     volumes:
       - /opt/docker-data/homeassistant:/config
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
     restart: unless-stopped
-    privileged: true
+    # this is required for some zeroconf integrations
     network_mode: host
     depends_on:
       - mosquitto
@@ -16,6 +51,16 @@ services:
   zigbee2mqtt:
     container_name: zigbee2mqtt
     image: koenkk/zigbee2mqtt:latest
+    ports:
+      - "8546:8546"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.z2m.rule=PathPrefix(`/z2m/`)"
+      - "traefik.http.routers.z2m.entrypoints=web"
+      - "traefik.http.middlewares.z2m.stripprefix.prefixes=/z2m"
+      - "traefik.http.middlewares.z2m.stripprefix.forceslash=true"
+      - "traefik.http.routers.z2m.middlewares=z2m"
+      - "traefik.http.services.z2m.loadbalancer.server.port=8546"
     volumes:
       - /opt/docker-data/zigbee2mqtt:/app/data
       - /run/udev:/run/udev:ro
@@ -24,7 +69,6 @@ services:
     restart: unless-stopped
     devices:
       - /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0:/dev/ttyUSB0
-    network_mode: host
     depends_on:
       - mosquitto
 
@@ -40,8 +84,17 @@ services:
   portainer:
     container_name: portainer
     image: portainer/portainer-ce:linux-arm
+    ports:
+      - "9000:9000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=PathPrefix(`/portainer`)"
+      - "traefik.http.routers.portainer.entrypoints=web"
+      - "traefik.http.middlewares.portainer.stripprefix.prefixes=/portainer"
+      - "traefik.http.middlewares.portainer.stripprefix.forceslash=false"
+      - "traefik.http.routers.portainer.middlewares=portainer"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
     restart: unless-stopped
-    network_mode: host
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
@@ -61,8 +114,17 @@ services:
   grafana:
     container_name: grafana
     image: grafana/grafana-oss
+    ports:
+      - "3000:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.middlewares.grafana.stripprefix.prefixes=/grafana"
+      - "traefik.http.middlewares.grafana.stripprefix.forceslash=false"
+      - "traefik.http.routers.grafana.middlewares=grafana"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     restart: unless-stopped
-    network_mode: host
     volumes:
       - /opt/docker-data/grafana/config:/etc/grafana
       - /opt/docker-data/grafana/data:/var/lib/grafana
@@ -75,6 +137,9 @@ services:
 
   nginx:
     image: umputun/nginx-le:latest
+    ports:
+      - "81:80"
+      - "443:443"
     restart: always
     container_name: nginx
     logging:
@@ -82,7 +147,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-    network_mode: host
     volumes:
       - /opt/docker-data/nginx-le/ssl:/etc/nginx/ssl
       - /opt/docker-data/nginx-le/services/pi.conf:/etc/nginx/service.conf
@@ -98,8 +162,19 @@ services:
     privileged: true
     restart: unless-stopped
     image: ghcr.io/blakeblackshear/frigate:stable
+    ports:
+      - "5000:5000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frigate.rule=PathPrefix(`/frigate`)"
+      - "traefik.http.routers.frigate.entrypoints=web"
+      # TODO: does not fully work: https://github.com/blakeblackshear/frigate/issues/4526
+      - "traefik.http.middlewares.frigate-strip.stripprefix.prefixes=/frigate"
+      - "traefik.http.middlewares.frigate-strip.stripprefix.forceslash=false"
+      - "traefik.http.middlewares.frigate-headers.headers.customrequestheaders.X-Ingress-Path=/frigate"
+      - "traefik.http.routers.frigate.middlewares=frigate-strip,frigate-headers"
+      - "traefik.http.services.frigate.loadbalancer.server.port=5000"
     shm_size: "256mb"
-    network_mode: host
     devices:
       - /dev/bus/usb/002/003:/dev/bus/usb/002/003
       - /dev/bus/usb/002/002:/dev/bus/usb/002/002
