@@ -151,16 +151,27 @@ services:
     labels:
       - "traefik.enable=true"
 
+      # portainer does not work with basic auth, so is only accessible from whitelist ips
+      - "traefik.http.middlewares.portainer_basicauth.basicauth.users=${BASICAUTH}"
+
       - "traefik.http.middlewares.portainer_stripprefix.stripprefix.prefixes=/portainer"
       - "traefik.http.middlewares.portainer_stripprefix.stripprefix.forceslash=false"
 
-      - "traefik.http.routers.portainer.rule=PathPrefix(`/portainer`)"
-      - "traefik.http.routers.portainer.entrypoints=web,websecure"
-      - "traefik.http.routers.portainer.middlewares=test-ipwhitelist@file,portainer_stripprefix"
+      - "traefik.http.routers.portainer_byip.rule=PathPrefix(`/portainer`) && ClientIP(${WHITELIST_IP})"
+      - "traefik.http.routers.portainer_byip.entrypoints=web,websecure"
+      - "traefik.http.routers.portainer_byip.middlewares=test-ipwhitelist@file,portainer_stripprefix"
 
-      - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
-      - "traefik.http.routers.portainer.tls.domains[0].main=${HOST}"
+      - "traefik.http.routers.portainer_default.rule=PathPrefix(`/portainer`)"
+      - "traefik.http.routers.portainer_default.entrypoints=web,websecure"
+      - "traefik.http.routers.portainer_default.middlewares=portainer_basicauth,portainer_stripprefix"
+
+      - "traefik.http.routers.portainer_byip.tls=true"
+      - "traefik.http.routers.portainer_byip.tls.certresolver=myresolver"
+      - "traefik.http.routers.portainer_byip.tls.domains[0].main=${HOST}"
+
+      - "traefik.http.routers.portainer_default.tls=true"
+      - "traefik.http.routers.portainer_default.tls.certresolver=myresolver"
+      - "traefik.http.routers.portainer_default.tls.domains[0].main=${HOST}"
 
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
     restart: unless-stopped
@@ -196,13 +207,23 @@ services:
       - "traefik.http.middlewares.grafana_basicauth.basicauth.headerField=X-WebAuth-User"
       - "traefik.http.middlewares.grafana_basicauth.basicauth.removeheader=true"
 
-      - "traefik.http.routers.grafana.rule=PathPrefix(`/grafana`)"
-      - "traefik.http.routers.grafana.entrypoints=web,websecure"
-      - "traefik.http.routers.grafana.middlewares=test-ipwhitelist@file,grafana_basicauth,grafana_stripprefix"
+      - "traefik.http.middlewares.grafana_skipauth.headers.customrequestheaders.X-WebAuth-User=admin"
 
-      - "traefik.http.routers.grafana.tls=true"
-      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
-      - "traefik.http.routers.grafana.tls.domains[0].main=${HOST}"
+      - "traefik.http.routers.grafana_byip.rule=PathPrefix(`/grafana`) && ClientIP(${WHITELIST_IP})"
+      - "traefik.http.routers.grafana_byip.entrypoints=web,websecure"
+      - "traefik.http.routers.grafana_byip.middlewares=test-ipwhitelist@file,grafana_skipauth,grafana_stripprefix"
+
+      - "traefik.http.routers.grafana_default.rule=PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana_default.entrypoints=web,websecure"
+      - "traefik.http.routers.grafana_default.middlewares=grafana_basicauth,grafana_stripprefix"
+
+      - "traefik.http.routers.grafana_byip.tls=true"
+      - "traefik.http.routers.grafana_byip.tls.certresolver=myresolver"
+      - "traefik.http.routers.grafana_byip.tls.domains[0].main=${HOST}"
+
+      - "traefik.http.routers.grafana_default.tls=true"
+      - "traefik.http.routers.grafana_default.tls.certresolver=myresolver"
+      - "traefik.http.routers.grafana_default.tls.domains[0].main=${HOST}"
 
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     restart: unless-stopped
