@@ -49,18 +49,38 @@ services:
     ports:
       - "8123:8123"
     labels:
-      - "traefik.enable=true"
       # sadly, home assistant does not support working under custom path
+
+      - "traefik.enable=true"
+
+      - "traefik.http.middlewares.hass_basicauth.basicauth.users=${BASICAUTH}"
+
       # TODO: specify all possible hass path variants
-      - "traefik.http.routers.hass.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.hass.priority=0"
-      - "traefik.http.routers.hass.entrypoints=web,websecure"
+      - "traefik.http.routers.hass_byip.rule=PathPrefix(`/`) && ClientIP(${WHITELIST_IP})"
+      - "traefik.http.routers.hass_byip.priority=3"
+      - "traefik.http.routers.hass_byip.entrypoints=web,websecure"
+      - "traefik.http.routers.hass_byip.middlewares=test-ipwhitelist@file"
 
-      - "traefik.http.routers.hass.middlewares=test-ipwhitelist@file"
+      - "traefik.http.routers.hass_byheader.rule=PathPrefix(`/`) && HeadersRegexp(${WHITELIST_HEADERS})"
+      - "traefik.http.routers.hass_byheader.priority=2"
+      - "traefik.http.routers.hass_byheader.entrypoints=web,websecure"
 
-      - "traefik.http.routers.hass.tls=true"
-      - "traefik.http.routers.hass.tls.certresolver=myresolver"
-      - "traefik.http.routers.hass.tls.domains[0].main=${HOST}"
+      - "traefik.http.routers.hass_default.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.hass_default.priority=1"
+      - "traefik.http.routers.hass_default.entrypoints=web,websecure"
+      - "traefik.http.routers.hass_default.middlewares=hass_basicauth"
+
+      - "traefik.http.routers.hass_byip.tls=true"
+      - "traefik.http.routers.hass_byip.tls.certresolver=myresolver"
+      - "traefik.http.routers.hass_byip.tls.domains[0].main=${HOST}"
+
+      - "traefik.http.routers.hass_byheader.tls=true"
+      - "traefik.http.routers.hass_byheader.tls.certresolver=myresolver"
+      - "traefik.http.routers.hass_byheader.tls.domains[0].main=${HOST}"
+
+      - "traefik.http.routers.hass_default.tls=true"
+      - "traefik.http.routers.hass_default.tls.certresolver=myresolver"
+      - "traefik.http.routers.hass_default.tls.domains[0].main=${HOST}"
 
       - "traefik.http.services.hass.loadbalancer.server.port=8123"
     volumes:
