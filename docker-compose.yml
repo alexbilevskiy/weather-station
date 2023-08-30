@@ -20,7 +20,7 @@ services:
       - "traefik.http.routers.dashboard.rule=PathPrefix(`/traefik`) || Headers(`Referer`, `https://${HOST}/traefik/dashboard/`)"
       - "traefik.http.routers.dashboard.entrypoints=web,websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=dashboard_stripprefix"
+      - "traefik.http.routers.dashboard.middlewares=test-ipwhitelist@file,dashboard_stripprefix"
 
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
@@ -56,6 +56,8 @@ services:
       - "traefik.http.routers.hass.priority=0"
       - "traefik.http.routers.hass.entrypoints=web,websecure"
 
+      - "traefik.http.routers.hass.middlewares=test-ipwhitelist@file"
+
       - "traefik.http.routers.hass.tls=true"
       - "traefik.http.routers.hass.tls.certresolver=myresolver"
       - "traefik.http.routers.hass.tls.domains[0].main=${HOST}"
@@ -84,7 +86,7 @@ services:
 
       - "traefik.http.routers.z2m.rule=PathPrefix(`/z2m/`)"
       - "traefik.http.routers.z2m.entrypoints=web,websecure"
-      - "traefik.http.routers.z2m.middlewares=z2m_stripprefix"
+      - "traefik.http.routers.z2m.middlewares=test-ipwhitelist@file,z2m_stripprefix"
 
       - "traefik.http.routers.z2m.tls=true"
       - "traefik.http.routers.z2m.tls.certresolver=myresolver"
@@ -124,7 +126,7 @@ services:
 
       - "traefik.http.routers.portainer.rule=PathPrefix(`/portainer`)"
       - "traefik.http.routers.portainer.entrypoints=web,websecure"
-      - "traefik.http.routers.portainer.middlewares=portainer_stripprefix"
+      - "traefik.http.routers.portainer.middlewares=test-ipwhitelist@file,portainer_stripprefix"
 
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.routers.portainer.tls.certresolver=myresolver"
@@ -161,7 +163,7 @@ services:
 
       - "traefik.http.routers.grafana.rule=PathPrefix(`/grafana`)"
       - "traefik.http.routers.grafana.entrypoints=web,websecure"
-      - "traefik.http.routers.grafana.middlewares=grafana_stripprefix"
+      - "traefik.http.routers.grafana.middlewares=test-ipwhitelist@file,grafana_stripprefix"
 
       - "traefik.http.routers.grafana.tls=true"
       - "traefik.http.routers.grafana.tls.certresolver=myresolver"
@@ -218,7 +220,7 @@ services:
 
       - "traefik.http.routers.frigate.rule=PathPrefix(`/frigate`)"
       - "traefik.http.routers.frigate.entrypoints=web,websecure"
-      - "traefik.http.routers.frigate.middlewares=frigate_stripprefix,frigate_headers"
+      - "traefik.http.routers.frigate.middlewares=test-ipwhitelist@file,frigate_stripprefix,frigate_headers"
 
       - "traefik.http.routers.frigate.tls=true"
       - "traefik.http.routers.frigate.tls.certresolver=myresolver"
