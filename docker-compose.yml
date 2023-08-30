@@ -211,27 +211,27 @@ services:
     network_mode: host
     restart: unless-stopped
 
-  nginx:
-    image: umputun/nginx-le:latest
-    ports:
-      - "81:80"
-      - "4443:443"
-    restart: always
-    container_name: nginx
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
-    volumes:
-      - /opt/docker-data/nginx-le/ssl:/etc/nginx/ssl
-      - /opt/docker-data/nginx-le/services/pi.conf:/etc/nginx/service.conf
-      - /opt/docker-data/nginx-le/confs/hass.conf:/etc/nginx/hass.conf
-      - /opt/docker-data/nginx-le/confs/acl.conf:/etc/nginx/acl.conf
-    environment:
-      - TZ=Europe/Moscow
-    env_file:
-      - nginx.env
+#  nginx:
+#    image: umputun/nginx-le:latest
+#    ports:
+#      - "81:80"
+#      - "4443:443"
+#    restart: always
+#    container_name: nginx
+#    logging:
+#      driver: json-file
+#      options:
+#        max-size: "10m"
+#        max-file: "5"
+#    volumes:
+#      - /opt/docker-data/nginx-le/ssl:/etc/nginx/ssl
+#      - /opt/docker-data/nginx-le/services/pi.conf:/etc/nginx/service.conf
+#      - /opt/docker-data/nginx-le/confs/hass.conf:/etc/nginx/hass.conf
+#      - /opt/docker-data/nginx-le/confs/acl.conf:/etc/nginx/acl.conf
+#    environment:
+#      - TZ=Europe/Moscow
+#    env_file:
+#      - nginx.env
 
   frigate:
     container_name: frigate
