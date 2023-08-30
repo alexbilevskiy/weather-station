@@ -81,16 +81,26 @@ services:
     labels:
       - "traefik.enable=true"
 
+      - "traefik.http.middlewares.z2m_basicauth.basicauth.users=${BASICAUTH}"
+
       - "traefik.http.middlewares.z2m_stripprefix.stripprefix.prefixes=/z2m"
       - "traefik.http.middlewares.z2m_stripprefix.stripprefix.forceslash=true"
 
-      - "traefik.http.routers.z2m.rule=PathPrefix(`/z2m/`)"
-      - "traefik.http.routers.z2m.entrypoints=web,websecure"
-      - "traefik.http.routers.z2m.middlewares=test-ipwhitelist@file,z2m_stripprefix"
+      - "traefik.http.routers.z2m_byip.rule=PathPrefix(`/z2m/`) && ClientIP(${WHITELIST_IP})"
+      - "traefik.http.routers.z2m_byip.entrypoints=web,websecure"
+      - "traefik.http.routers.z2m_byip.middlewares=test-ipwhitelist@file,z2m_stripprefix"
 
-      - "traefik.http.routers.z2m.tls=true"
-      - "traefik.http.routers.z2m.tls.certresolver=myresolver"
-      - "traefik.http.routers.z2m.tls.domains[0].main=${HOST}"
+      - "traefik.http.routers.z2m_default.rule=PathPrefix(`/z2m/`)"
+      - "traefik.http.routers.z2m_default.entrypoints=web,websecure"
+      - "traefik.http.routers.z2m_default.middlewares=z2m_basicauth,z2m_stripprefix"
+
+      - "traefik.http.routers.z2m_byip.tls=true"
+      - "traefik.http.routers.z2m_byip.tls.certresolver=myresolver"
+      - "traefik.http.routers.z2m_byip.tls.domains[0].main=${HOST}"
+
+      - "traefik.http.routers.z2m_default.tls=true"
+      - "traefik.http.routers.z2m_default.tls.certresolver=myresolver"
+      - "traefik.http.routers.z2m_default.tls.domains[0].main=${HOST}"
 
       - "traefik.http.services.z2m.loadbalancer.server.port=8546"
     volumes:
