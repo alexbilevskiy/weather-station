@@ -1,5 +1,2 @@
 .idea
-config.json
 config-clock.json
-nginx.env
-.env
