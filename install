@@ -1,2 +1,2 @@
-sudo ln -s /opt/src/station/systemd/led-clock.service /etc/systemd/system/led-clock.service
+sudo ln -s /opt/src/weather-station/systemd/led-clock.service /etc/systemd/system/led-clock.service
 

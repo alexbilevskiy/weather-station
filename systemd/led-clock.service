@@ -1,5 +1,5 @@
 [Unit]
-#install: `sudo ln -s /opt/src/station/systemd/led-clock.service /etc/systemd/system/led-clock.service`
+#install: `sudo ln -s /opt/src/weather-station/systemd/led-clock.service /etc/systemd/system/led-clock.service`
 Description=Led display worker
 After=network.target
 StartLimitInterval=0
@@ -8,8 +8,8 @@ StartLimitInterval=0
 Type=simple
 Restart=always
 RestartSec=10
-ExecStart=/usr/bin/python3 -B -u /opt/src/station/led-clock/led-clock.py --light-adjust=0
-WorkingDirectory=/opt/src/station/led-clock
+ExecStart=/usr/bin/python3 -B -u /opt/src/weather-station/led-clock/led-clock.py --light-adjust=0
+WorkingDirectory=/opt/src/weather-station/led-clock
 
 
 [Install]

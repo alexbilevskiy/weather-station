@@ -308,11 +308,11 @@ class RunText:
         #https://yastatic.net/weather/i/icons/islands/32/
         if iconName in self.icons:
             return self.icons[iconName]
-        i8 = '/opt/src/station/icons8/' + iconName + '_8.png'
+        i8 = '/opt/src/weather-station/icons8/' + iconName + '_8.png'
         if os.path.isfile(i8):
             i = Image.open(i8)
         else:
-            i = Image.open('/opt/src/station/icons/' + iconName + '.png').resize((8, 8), Image.HAMMING)
+            i = Image.open('/opt/src/weather-station/icons/' + iconName + '.png').resize((8, 8), Image.HAMMING)
         m = Image.new('RGB', i.size, "BLACK")
         m.paste(i, (0, 0), i)
         self.icons[iconName] = m
