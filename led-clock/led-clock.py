@@ -253,7 +253,10 @@ class RunText:
             col = self.outsideTempColor
         else:
             dev_out = self.config['devices']['temp_outside_provided']
-            temp = int(round(float(hass[dev_out['id']]['attributes'][dev_out['attr']]), 0))
+            if dev_out['attr'] in hass[dev_out['id']]['attributes']:
+                temp = int(round(float(hass[dev_out['id']]['attributes'][dev_out['attr']]), 0))
+            else:
+                temp = None
             col = self.outsideTempYaColor
 
         if temp is not None:
@@ -276,7 +279,10 @@ class RunText:
     def drawForecast(self, hass):
         c = self.forecastColor
         dev_forecast = self.config['devices']['forecast']
-        if dev_forecast['id'] not in hass:
+        if dev_forecast['id'] not in hass or 'forecast' not in hass[dev_forecast['id']]['attributes']:
+            return
+
+        if len(hass[dev_forecast['id']]['attributes']['forecast']) < 2:
             return
 
         #self.formatDayTime(metrics['yandex']['forecast']['parts'][0]['part_name'])
