@@ -129,9 +129,7 @@ class RunText:
             self.drawWind(hass)
             self.drawCo2(hass)
             self.drawSky(hass)
-
-            #requires yandex "radar" sensor
-            #self.drawPrecip(hass)
+            self.drawPrecip(hass)
 
 
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
@@ -366,60 +364,64 @@ class RunText:
         self.canvas.SetPixel(dot-1, 0, r, g, b)
         self.canvas.SetPixel(dot+1, 0, r, g, b)
 
-    def drawPrecip(self, metrics):
-        # metrics['yandex']['radar']['current']['prec_type'] = 2
-        # metrics['yandex']['radar']['strength'] = 'avg'
-        # metrics['yandex']['fact']['wind_speed'] = 2
+    def drawPrecip(self, hass):
+        prec_type = None
+        prec_strength = None
+        wind_speed = None
 
-        try:
-            metrics['yandex']['radar']['current']['prec_type']
-            metrics['yandex']['fact']['wind_speed']
-            metrics['yandex']['radar']['current']['prec_strength']
+        dev_prec_type = self.config['devices']['prec_type']
+        if dev_prec_type['id'] in hass:
+            prec_type = int(hass[dev_prec_type['id']]['state'])
 
-        except Exception as e:
-            print('prec exc: ' + str(e))
+        dev_prec_strength = self.config['devices']['prec_strength']
+        if dev_prec_strength['id'] in hass:
+            prec_strength = int(hass[dev_prec_strength['id']]['state'])
+
+        dev_wind_speed = self.config['devices']['wind_speed']
+        if dev_wind_speed['id'] in hass:
+            wind_speed = int(round(float(hass[dev_wind_speed['id']]['attributes'][dev_wind_speed['attr']]), 0))
+
+        if prec_type is None or prec_strength is None or wind_speed is None:
             return
 
-        strength = 0
-        if metrics['yandex']['radar']['current']['prec_strength'] == 0:
-            try:
-                metrics['yandex']['radar']['strength']
-            except:
-                metrics['yandex']['radar']['strength'] = 'avg'
-            if metrics['yandex']['radar']['strength'] == 'avg':
-                strength = 0.5
-            else:
-                strength = 1
-        else:
-            strength = metrics['yandex']['radar']['current']['prec_strength']
+        strength = prec_strength
+        # if prec_strength == 0:
+        #     try:
+        #         metrics['yandex']['radar']['strength']
+        #     except:
+        #         metrics['yandex']['radar']['strength'] = 'avg'
+        #     if metrics['yandex']['radar']['strength'] == 'avg':
+        #         strength = 0.5
+        #     else:
+        #         strength = 1
 
         maxFlakes = int(self.ledH * strength)
         minX = 0
         speed = 10 # pixels per second
-        if metrics['yandex']['radar']['current']['prec_type'] == 0: # no precipitation
+        if prec_type == 0: # no precipitation
             self.delay = 0.05
             return
-        elif metrics['yandex']['radar']['current']['prec_type'] == 1: # rain
+        elif prec_type == 1: # rain
             # self.delay = 0.01
             speed = 30
-        elif metrics['yandex']['radar']['current']['prec_type'] == 2: # rain + snow
+        elif prec_type == 2: # rain + snow
             # self.delay = 0.04
             speed = 15
-        elif metrics['yandex']['radar']['current']['prec_type'] == 3: # snow
+        elif prec_type == 3: # snow
             # self.delay = 0.05
             speed = 6
         self.delay = 0
 
         delay = 1 / speed
         interval = self.ledH / (maxFlakes * speed)
-        horizontalSpeed = int(metrics['yandex']['fact']['wind_speed']/3)
+        horizontalSpeed = int(wind_speed/3)
         if horizontalSpeed > 0:
             minX = -16
 
         nowMicro = datetime.datetime.now().timestamp()
         if (len(self.snow) < maxFlakes) and (nowMicro - self.snowTimer > interval):
             startY = 0
-            self.snow.append({'x': random.randint(minX, self.ledW - 1), 'y': startY, 'timer': time.time(), 'color': self.getColorByPrec(metrics['yandex']['radar']['current']['prec_type'])})
+            self.snow.append({'x': random.randint(minX, self.ledW - 1), 'y': startY, 'timer': time.time(), 'color': self.getColorByPrec(prec_type)})
             self.snowTimer = nowMicro
 
         for i, f in enumerate(self.snow):
@@ -430,15 +432,15 @@ class RunText:
             # print('real speed: ' + str(realSpeed))
             self.snow[i]['timer'] = nowMicro
 
-            if metrics['yandex']['radar']['current']['prec_type'] == 1:
+            if prec_type == 1:
                 self.snow[i]['color'] = self.getColorByPrec(1)
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += 0
-                self.snow[i]['x'] += int(metrics['yandex']['fact']['wind_speed']/4)
-            elif metrics['yandex']['radar']['current']['prec_type'] == 2:
+                self.snow[i]['x'] += int(wind_speed/4)
+            elif prec_type == 2:
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += random.randint(0, horizontalSpeed)
-            elif metrics['yandex']['radar']['current']['prec_type'] == 3:
+            elif prec_type == 3:
                 self.snow[i]['color'] = self.getColorByPrec(3)
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += random.randint(-1, 1)
