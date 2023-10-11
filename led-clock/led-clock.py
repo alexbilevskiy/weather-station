@@ -375,13 +375,13 @@ class RunText:
 
         dev_prec_strength = self.config['devices']['prec_strength']
         if dev_prec_strength['id'] in hass:
-            prec_strength = int(hass[dev_prec_strength['id']]['state'])
+            prec_strength = float(hass[dev_prec_strength['id']]['state'])
 
         dev_wind_speed = self.config['devices']['wind_speed']
         if dev_wind_speed['id'] in hass:
             wind_speed = int(round(float(hass[dev_wind_speed['id']]['attributes'][dev_wind_speed['attr']]), 0))
 
-        if prec_type is None or prec_strength is None or wind_speed is None:
+        if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             return
 
         strength = prec_strength

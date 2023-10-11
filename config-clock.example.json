@@ -35,6 +35,12 @@
     },
     "sun": {
       "id": "sun.sun"
+    },
+    "prec_type": {
+      "id": "sensor.precipitation_type"
+    },
+    "prec_strength": {
+      "id": "sensor.precipitation_strength_fact"
     }
   },
   "hass": {
