@@ -229,7 +229,7 @@ class RunText:
 
     def drawTemp(self, hass):
         dev_temp_in = self.config['devices']['temp_inside']
-        if dev_temp_in['id'] in hass:
+        if dev_temp_in['id'] in hass and hass[dev_temp_in['id']]['state'] != 'unknown' and hass[dev_temp_in['id']]['state'] != 'unavailable':
             r, d = str(round(float(hass[dev_temp_in['id']]['state']), 1)).split('.')
         else:
             r = 'N/'
@@ -370,7 +370,7 @@ class RunText:
         wind_speed = None
 
         dev_prec_type = self.config['devices']['prec_type']
-        if dev_prec_type['id'] in hass:
+        if dev_prec_type['id'] in hass and hass[dev_prec_type['id']]['state'] != 'unavailable' and hass[dev_prec_type['id']]['state'] != 'unknown':
             prec_type = int(hass[dev_prec_type['id']]['state'])
 
         dev_prec_strength = self.config['devices']['prec_strength']
