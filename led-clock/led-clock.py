@@ -384,18 +384,7 @@ class RunText:
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             return
 
-        strength = prec_strength
-        # if prec_strength == 0:
-        #     try:
-        #         metrics['yandex']['radar']['strength']
-        #     except:
-        #         metrics['yandex']['radar']['strength'] = 'avg'
-        #     if metrics['yandex']['radar']['strength'] == 'avg':
-        #         strength = 0.5
-        #     else:
-        #         strength = 1
-
-        maxFlakes = int(self.ledH * strength)
+        maxFlakes = int(self.ledH * prec_strength)
         minX = 0
         speed = 10 # pixels per second
         if prec_type == 0: # no precipitation
@@ -414,9 +403,9 @@ class RunText:
 
         delay = 1 / speed
         interval = self.ledH / (maxFlakes * speed)
-        horizontalSpeed = int(wind_speed/3)
+        horizontalSpeed = int(wind_speed/2)
         if horizontalSpeed > 0:
-            minX = -16
+            minX = -32
 
         nowMicro = datetime.datetime.now().timestamp()
         if (len(self.snow) < maxFlakes) and (nowMicro - self.snowTimer > interval):
@@ -435,8 +424,7 @@ class RunText:
             if prec_type == 1:
                 self.snow[i]['color'] = self.getColorByPrec(1)
                 self.snow[i]['y'] += 1
-                self.snow[i]['x'] += 0
-                self.snow[i]['x'] += int(wind_speed/4)
+                self.snow[i]['x'] += random.randint(0, horizontalSpeed)
             elif prec_type == 2:
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += random.randint(0, horizontalSpeed)
