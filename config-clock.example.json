@@ -22,7 +22,11 @@
       "attr": "wind_bearing"
     },
     "forecast": {
-      "id": "weather.yandex_weather"
+      "id": "weather.yandex_weather",
+      "attrs": [
+        "forecast",
+        "forecast_icons"
+      ]
     },
     "temp_inside": {
       "id" : "sensor.0x00158d0001713dab_temperature"
@@ -33,7 +37,14 @@
     "co2_level": {
       "id" : "sensor.co2_cm11"
     },
-    "sun": {
+    "sun_period": {
+      "id": "sun.sun",
+      "attrs": [
+        "next_rising",
+        "next_setting"
+      ]
+    },
+    "sun_current": {
       "id": "sun.sun"
     },
     "prec_type": {

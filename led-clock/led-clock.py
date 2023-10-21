@@ -122,14 +122,14 @@ class RunText:
         if not hass:
             graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO HASS')
         else:
-            self.defineBrightness(now, hass)
-            self.drawTemp(hass)
-            self.drawHumidity(hass)
-            self.drawForecast(hass)
-            self.drawWind(hass)
-            self.drawCo2(hass)
-            self.drawSky(hass)
-            self.drawPrecip(hass)
+            self.defineBrightness(now)
+            self.drawTemp(now)
+            self.drawHumidity()
+            self.drawForecast()
+            self.drawWind()
+            self.drawCo2()
+            self.drawSky()
+            self.drawPrecip()
 
 
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
@@ -184,29 +184,27 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 17, self.clockPos[1], self.colorW, ':')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 25, self.clockPos[1], self.colorW, m)
 
-    def drawCo2(self, hass):
-        dev_co2 = self.config['devices']['co2_level']
-        if dev_co2['id'] in hass and hass[dev_co2['id']]['state'].isnumeric():
-            co2text = u'{0}p'.format(int(float(hass[dev_co2['id']]['state'])))
+    def drawCo2(self):
+        dev_co2 = self.getHassEntity('co2_level')
+        if dev_co2 is not None:
+            co2text = u'{0}p'.format(int(float(dev_co2)))
         else:
             co2text = 'N/A'
         width = len(co2text) * self.fontSmW
         coords = self.getCoords('co2', self.co2Pos[1], width, self.fontSmH, 'left', [255, 0, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.co2Pos[1], self.co2Color, co2text)
 
-    def drawHumidity(self, hass):
-        dev_hum = self.config['devices']['humidity_inside']
-        if dev_hum['id'] in hass:
-            hinText = u'{0}%'.format(int(round(float(hass[dev_hum['id']]['state']), 0)))
+    def drawHumidity(self):
+        dev_hum = self.getHassEntity('humidity_inside')
+        if dev_hum is not None:
+            hinText = u'{0}%'.format(int(round(float(dev_hum), 0)))
         else:
             hinText = 'N/A'
         width = len(hinText) * self.fontSmW
         coords = self.getCoords('hum', self.humPos[1], width, self.fontSmH, color=[255, 100, 100], a='left')
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.humPos[1], self.humColor, hinText)
 
-    def drawWind(self, hass):
-        dev_wind_speed = self.config['devices']['wind_speed']
-        dev_wind_bearing = self.config['devices']['wind_bearing']
+    def drawWind(self):
         WIND_DIRECTION_MAPPING = {
             315: "nw",
             360: "n",
@@ -218,19 +216,21 @@ class RunText:
             270: "w",
             0: "c",
         }
-        try:
-            windSpeedText = u'{1}{0}'.format(int(round(float(hass[dev_wind_speed['id']]['attributes'][dev_wind_speed['attr']]), 0)), WIND_DIRECTION_MAPPING[hass[dev_wind_bearing['id']]['attributes'][dev_wind_bearing['attr']]])
-        except:
+        dev_wind_speed = self.getHassEntity('wind_speed')
+        dev_wind_bearing = self.getHassEntity('wind_bearing')
+        if dev_wind_bearing is not None and dev_wind_speed is not None:
+            windSpeedText = u'{1}{0}'.format(int(round(float(dev_wind_speed), 0)), WIND_DIRECTION_MAPPING[dev_wind_bearing])
+        else:
             windSpeedText = 'N/A'
 
         width = len(windSpeedText) * self.fontSmW
         coords = self.getCoords('wind', self.windSpPos[1], width, self.fontSmH, a='right', color=[100, 255, 150], padding=0)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.windSpPos[1], self.windColor, windSpeedText)
 
-    def drawTemp(self, hass):
-        dev_temp_in = self.config['devices']['temp_inside']
-        if dev_temp_in['id'] in hass and hass[dev_temp_in['id']]['state'] != 'unknown' and hass[dev_temp_in['id']]['state'] != 'unavailable':
-            r, d = str(round(float(hass[dev_temp_in['id']]['state']), 1)).split('.')
+    def drawTemp(self, now):
+        dev_temp_inside = self.getHassEntity('temp_inside')
+        if dev_temp_inside is not None:
+            r, d = str(round(float(dev_temp_inside), 1)).split('.')
         else:
             r = 'N/'
             d = 'A'
@@ -242,17 +242,17 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + 14, coords['y'], self.insideTempColor, u'°')
         self.canvas.SetPixel(coords['x'] + 9, coords['y'] - 1, self.tempDotColor.red, self.tempDotColor.green, self.tempDotColor.blue)
 
-        if int(datetime.datetime.now().strftime("%s")) % 10 >= 5:
-            dev_out = self.config['devices']['temp_outside']
-            if dev_out['id'] in hass:
-                temp = int(round(float(hass[dev_out['id']]['state']), 0))
+        if now.second % 10 >= 5:
+            dev_temp_outside = self.getHassEntity('temp_outside')
+            if dev_temp_outside is not None:
+                temp = int(round(float(dev_temp_outside), 0))
             else:
                 temp = None
             col = self.outsideTempColor
         else:
-            dev_out = self.config['devices']['temp_outside_provided']
-            if dev_out['attr'] in hass[dev_out['id']]['attributes']:
-                temp = int(round(float(hass[dev_out['id']]['attributes'][dev_out['attr']]), 0))
+            dev_temp_outside = self.getHassEntity('temp_outside_provided')
+            if dev_temp_outside is not None:
+                temp = int(round(float(dev_temp_outside), 0))
             else:
                 temp = None
             col = self.outsideTempYaColor
@@ -274,32 +274,32 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + ofs, self.tempPos[1] + 7, col, tempStr)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.tempPos[1] + 7, col, u'°')
 
-    def drawForecast(self, hass):
+    def drawForecast(self):
         c = self.forecastColor
-        dev_forecast = self.config['devices']['forecast']
-        if dev_forecast['id'] not in hass or 'forecast' not in hass[dev_forecast['id']]['attributes']:
+        dev_forecast = self.getHassEntity('forecast')
+        if dev_forecast is None:
             return
 
-        if len(hass[dev_forecast['id']]['attributes']['forecast']) < 2:
+        if len(dev_forecast['forecast']) < 2:
             return
 
-        fc1 = u'{0}{1}'.format(self.formatDayTime(hass[dev_forecast['id']]['attributes']['forecast'][0]['datetime']), int(round(hass[dev_forecast['id']]['attributes']['forecast'][0]['temperature'])))
+        fc1 = u'{0}{1}'.format(self.formatDayTime(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['temperature'])))
         width = len(fc1) * self.fontSmW + 2 # corection for "°"
         coords = self.getCoords('weather1', self.forecastPos[1], width, self.fontSmH, a='right', color=[100, 100, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1], c, fc1)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.forecastPos[1], c, u'°')
 
         coords = self.getCoords('weather1_icon', self.forecastPos[1], self.imgW, self.imgH, a='right', color=[255, 100, 255])
-        self.drawImage(self.getIcon(hass[dev_forecast['id']]['attributes']['forecast_icons'][0]), coords['x'], coords['y'])
+        self.drawImage(self.getIcon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
 
-        fc2 = u'{0}{1}'.format(self.formatDayTime(hass[dev_forecast['id']]['attributes']['forecast'][1]['datetime']), int(round(hass[dev_forecast['id']]['attributes']['forecast'][1]['temperature'])))
+        fc2 = u'{0}{1}'.format(self.formatDayTime(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['temperature'])))
         width = len(fc2) * self.fontSmW + 2 # corection for "°"
         coords = self.getCoords('weather2', self.forecastPos[1] + 8, width, self.fontSmH, a='right', color=[100, 100, 255])
         graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1] + 8, c, fc2)
         graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.forecastPos[1] + 8, c, u'°')
 
         coords = self.getCoords('weather2_icon', self.forecastPos[1] + 8, self.imgW, self.imgH, a='right', color=[255, 100, 255])
-        self.drawImage(self.getIcon(hass[dev_forecast['id']]['attributes']['forecast_icons'][1]), coords['x'], coords['y'])
+        self.drawImage(self.getIcon(dev_forecast['forecast_icons'][1]), coords['x'], coords['y'])
 
     def getIcon(self, iconName):
         #https://yastatic.net/weather/i/icons/islands/32/
@@ -326,14 +326,15 @@ class RunText:
                     continue
                 self.canvas.SetPixel(x + posX, y + posY, self.c(r*0.7), self.c(g*0.7), self.c(b*0.7))
 
-    def drawSky(self, hass):
-        dev_sun = self.config['devices']['sun']
-        sun = hass[dev_sun['id']]
+    def drawSky(self):
+        dev_sun = self.getHassEntity('sun_period')
+        if dev_sun is None:
+            return
 
         curTime = datetime.datetime.now()
 
-        sr = datetime.datetime.fromisoformat(sun['attributes']['next_rising'])
-        ss = datetime.datetime.fromisoformat(sun['attributes']['next_setting'])
+        sr = datetime.datetime.fromisoformat(dev_sun['next_rising'])
+        ss = datetime.datetime.fromisoformat(dev_sun['next_setting'])
         dayLen = 0
         day = True
         if sr > ss:
@@ -363,22 +364,22 @@ class RunText:
         self.canvas.SetPixel(dot-1, 0, r, g, b)
         self.canvas.SetPixel(dot+1, 0, r, g, b)
 
-    def drawPrecip(self, hass):
+    def drawPrecip(self):
         prec_type = None
         prec_strength = None
         wind_speed = None
 
-        dev_prec_type = self.config['devices']['prec_type']
-        if dev_prec_type['id'] in hass and hass[dev_prec_type['id']]['state'] != 'unavailable' and hass[dev_prec_type['id']]['state'] != 'unknown':
-            prec_type = int(hass[dev_prec_type['id']]['state'])
+        dev_prec_type = self.getHassEntity('prec_type')
+        if dev_prec_type is not None:
+            prec_type = int(dev_prec_type)
 
-        dev_prec_strength = self.config['devices']['prec_strength']
-        if dev_prec_strength['id'] in hass:
-            prec_strength = float(hass[dev_prec_strength['id']]['state'])
+        dev_prec_strength = self.getHassEntity('prec_strength')
+        if dev_prec_strength is not None:
+            prec_strength = float(dev_prec_strength)
 
-        dev_wind_speed = self.config['devices']['wind_speed']
-        if dev_wind_speed['id'] in hass:
-            wind_speed = int(round(float(hass[dev_wind_speed['id']]['attributes'][dev_wind_speed['attr']]), 0))
+        dev_wind_speed = self.getHassEntity('wind_speed')
+        if dev_wind_speed is not None:
+            wind_speed = int(round(dev_wind_speed, 0))
 
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             return
@@ -460,7 +461,7 @@ class RunText:
             return 'n'
         return 'u'
 
-    def defineBrightness(self, now, hass):
+    def defineBrightness(self, now):
         if self.userBrightness:
             if self.userBrightness == 1:
                 self.matrix.brightness = 2
@@ -471,16 +472,16 @@ class RunText:
             self.initColors()
             return
         self.bri = 1
-        dev_sun = self.config['devices']['sun']
+        dev_sun = self.getHassEntity('sun_current')
         if 0 <= now.hour < 6:
-            if hass[dev_sun['id']]['state'] == 'below_horizon':
+            if dev_sun == 'below_horizon':
                 self.bri = 0.5
                 self.matrix.brightness = 2
             else:
                 self.bri = 1
                 self.matrix.brightness = 20
         elif 6 <= now.hour < 9:
-            if hass[dev_sun['id']]['state'] == 'below_horizon':
+            if dev_sun == 'below_horizon':
                 self.bri = 1
                 self.matrix.brightness = 20
             else:
@@ -496,6 +497,33 @@ class RunText:
             self.bri = 1
             self.matrix.brightness = 60
         self.initColors()
+
+    def getHassEntity(self, configKey):
+        if configKey not in self.config['devices']:
+            return None
+        device = self.config['devices'][configKey]
+        entityKey = device['id']
+        if entityKey not in self.hass:
+            return None
+        entity = self.hass[entityKey]
+        if entity['state'] == 'unknown' or entity['state'] == 'unavailable':
+            return None
+        if 'attr' in device:
+            if 'attributes' not in entity or device['attr'] not in entity['attributes']:
+                return None
+
+            return entity['attributes'][device['attr']]
+        if 'attrs' in device:
+            if 'attributes' not in entity:
+                return None
+            attrs = {}
+            for attr in device['attrs']:
+                if attr not in entity['attributes']:
+                    return None
+                attrs[attr] = entity['attributes'][attr]
+            return attrs
+
+        return entity['state']
 
     def readHass(self):
         now = time.time()
