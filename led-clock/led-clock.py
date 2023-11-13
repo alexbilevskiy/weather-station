@@ -462,39 +462,33 @@ class RunText:
         return 'u'
 
     def defineBrightness(self, now):
+        self.bri = 1
         if self.userBrightness:
             if self.userBrightness == 1:
-                self.matrix.brightness = 2
+                self.matrix.brightness = 1
                 self.bri = 0.5
             else:
                 self.matrix.brightness = self.userBrightness
-                self.bri = 1
             self.initColors()
             return
-        self.bri = 1
+
         dev_sun = self.getHassEntity('sun_current')
         if 0 <= now.hour < 6:
             if dev_sun == 'below_horizon':
+                self.matrix.brightness = 1
                 self.bri = 0.5
-                self.matrix.brightness = 2
             else:
-                self.bri = 1
                 self.matrix.brightness = 20
         elif 6 <= now.hour < 9:
             if dev_sun == 'below_horizon':
-                self.bri = 1
                 self.matrix.brightness = 20
             else:
-                self.bri = 1
                 self.matrix.brightness = 50
         elif 18 <= now.hour < 22:
-            self.bri = 1
             self.matrix.brightness = 25
         elif 22 <= now.hour < 24:
-            self.bri = 1
             self.matrix.brightness = 3
         else:
-            self.bri = 1
             self.matrix.brightness = 60
         self.initColors()
 
