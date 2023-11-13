@@ -32,6 +32,11 @@
       "border_color": [160, 100, 90],
       "align_x": "right"
     },
+    "outside_icon": {
+      "row": 1,
+      "border_color": [255, 100, 255],
+      "align_x": "right"
+    },
     "temp_outside": {
       "row": 1,
       "color": [20, 110, 110],
@@ -61,7 +66,7 @@
       "align_x": "right"
     },
     "wind": {
-      "row": 2,
+      "row": 4,
       "color": [20, 60, 110],
       "border_color": [100, 255, 150],
       "align_x": "right"
@@ -74,6 +79,9 @@
     "temp_outside_provided": {
       "id": "weather.yandex_weather",
       "attr": "temperature"
+    },
+    "current_weather_icon": {
+      "id": "sensor.current_icon"
     },
     "wind_speed": {
       "id": "weather.yandex_weather",

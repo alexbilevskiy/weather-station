@@ -129,7 +129,7 @@ class RunText:
     def drawCo2(self):
         dev_co2 = self.getHassEntity('co2_level')
         if dev_co2 is not None:
-            text = u'{0}p'.format(int(float(dev_co2)))
+            text = u'{0}ppm'.format(int(float(dev_co2)))
         else:
             text = 'N/A'
         width = self.calcWidth(text, self.fontReg)
@@ -164,7 +164,7 @@ class RunText:
         dev_wind_bearing = self.getHassEntity('wind_bearing')
         text = 'N/A'
         if dev_wind_bearing is not None and dev_wind_speed is not None:
-            text = u'{1}{0}'.format(int(round(float(dev_wind_speed), 0)), WIND_DIRECTION_MAPPING[dev_wind_bearing])
+            text = u'{1} {0}m/s'.format(int(round(float(dev_wind_speed), 0)), WIND_DIRECTION_MAPPING[dev_wind_bearing])
 
         width = self.calcWidth(text, self.fontReg)
         coords = self.getCoords('wind', w=width, h=self.fontRegH)
@@ -196,6 +196,12 @@ class RunText:
         width = self.calcWidth(text, self.fontReg)
         coords = self.getCoords('temp_outside', w=width, h=self.fontRegH)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], col, text)
+
+        dev_current_icon = self.getHassEntity('current_weather_icon')
+        if dev_current_icon is None:
+            return
+        coords = self.getCoords('outside_icon', w=self.imgSize, h=self.imgSize)
+        self.drawImage(self.getIcon(dev_current_icon), coords['x'], coords['y'])
 
     def drawForecast(self):
         c = self.getColor('weather1')
