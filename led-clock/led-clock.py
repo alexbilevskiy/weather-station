@@ -59,7 +59,7 @@ class RunText:
         options.disable_hardware_pulsing = False
         options.hardware_mapping = 'regular'
         options.row_address_type = 0
-        options.brightness = 100
+        options.brightness = 30
         options.show_refresh_rate = False
 
         self.matrix = RGBMatrix(options = options)
@@ -344,7 +344,7 @@ class RunText:
             if prec_type == 1:
                 self.snow[i]['color'] = self.getColorByPrec(1)
                 self.snow[i]['y'] += 1
-                self.snow[i]['x'] += random.randint(0, horizontalSpeed)
+                self.snow[i]['x'] += 0 if self.snow[i]['y'] % horizontalSpeed == 0 else 1
             elif prec_type == 2:
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += random.randint(0, horizontalSpeed)
