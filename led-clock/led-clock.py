@@ -75,8 +75,16 @@ class RunText:
 
     def run(self):
         while True:
+            now = time.time_ns() // 1000000
+            next = now + self.delay * 1000
             self.clock()
-            time.sleep(self.delay)
+            new = time.time_ns() // 1000000
+            diff = next-new
+            if diff < 0:
+                #print("LAG " + str(diff) + "ms")
+                continue
+            #print("SLEEP " + str(diff) + "ms")
+            time.sleep(diff / 1000)
 
     def clock(self):
         self.canvas.Clear()
