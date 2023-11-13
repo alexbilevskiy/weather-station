@@ -16,42 +16,39 @@ class RunText:
         with open('../config-clock.json') as f:
             s = f.read()
             self.config = json.loads(s)
+            self.elements = self.config["elements"]
 
         self.map = collections.OrderedDict()
+        self.colors = collections.OrderedDict()
 
         self.mqcl = None
 
         self.icons = {}
-        self.ledW = 64
-        self.ledH = 32
+        self.ledW = 128
+        self.ledH = 64
         self.delay = 0.05
 
-        self.clockPos = [0, 14]
-        self.tempPos = [46, 7]
-        self.co2Pos = [1, 31]
-        self.humPos = [1, 23]
-        self.windSpPos = [25, 23]
-        self.forecastPos = [41, 23]
+        self.rowH = 8
 
+        self.debugBorders = False
+
+        self.fontClock = graphics.Font()
+        self.fontClock.LoadFont("./fonts/10x20.bdf")
+        self.fontClockW = 8
+        self.fontClockH = 14
         self.fontReg = graphics.Font()
-        self.fontReg.LoadFont("./fonts/10x20.bdf")
-        self.fontRegW = 8
-        self.fontRegH = 14
+        self.fontReg.LoadFont("./fonts/5x8.bdf")
+        self.fontRegW = 5
+        self.fontRegH = 7
         self.fontSm = graphics.Font()
-        self.fontSm.LoadFont("./fonts/5x8.bdf")
-        self.fontSmW = 5
-        self.fontSmH = 7
-        self.fontSmm = graphics.Font()
-        self.fontSmm.LoadFont("./fonts/4x6.bdf")
-        self.fontSmmW = 4
+        self.fontSm.LoadFont("./fonts/4x6.bdf")
+        self.fontSmW = 4
 
         self.imgW = 8
         self.imgH = 7
 
         self.userBrightness = None
         self.bri = 1
-        self.prevBri = None
-        self.initColors()
         self.snow = []
         self.snowTimer = time.time()
 
@@ -76,34 +73,6 @@ class RunText:
         self.hassUpdated = 0
         self.hass = None
 
-    def initColors(self):
-        if self.bri == self.prevBri:
-            return
-        self.prevBri = self.bri
-        self.colorW = graphics.Color(self.c(255), self.c(255), self.c(255))
-        self.colorR = graphics.Color(self.c(110), self.c(0), self.c(0))
-        self.colorG = graphics.Color(self.c(0), self.c(255), self.c(0))
-        self.colorB = graphics.Color(self.c(0), self.c(0), self.c(255))
-        self.colorY = graphics.Color(self.c(255), self.c(255), self.c(0))
-        self.colorGray = graphics.Color(self.c(90), self.c(90), self.c(90))
-
-        #self.insideTempColor = graphics.Color(self.c(30), self.c(250), self.c(50))
-        #self.insideTempColor = graphics.Color(self.c(3), self.c(160), self.c(20))
-        self.insideTempColor = graphics.Color(self.c(2), self.c(100), self.c(12))
-        self.tempDotColor = self.colorR
-        self.outsideTempYaColor = graphics.Color(self.c(10), self.c(60), self.c(60))
-        #self.outsideTempColor = graphics.Color(self.c(100), self.c(255), self.c(255))
-        self.outsideTempColor = graphics.Color(self.c(20), self.c(110), self.c(110))
-        self.forecastColor = graphics.Color(self.c(60), self.c(20), self.c(60))
-        self.co2Color = graphics.Color(self.c(80), self.c(80), self.c(80))
-        self.humColor = graphics.Color(self.c(80), self.c(80), self.c(80))
-        self.windColor = graphics.Color(self.c(20), self.c(60), self.c(110))
-
-    def c(self, col):
-        if col*self.bri>255:
-            return 255
-        return col*self.bri
-
     def run(self):
         while True:
             self.clock()
@@ -120,7 +89,7 @@ class RunText:
 
         hass = self.readHass()
         if not hass:
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'NO HASS')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.getColor('clock'), u'NO HASS')
         else:
             self.defineBrightness(now)
             self.drawTemp(now)
@@ -142,47 +111,17 @@ class RunText:
             posX = 8
             color = graphics.Color(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
             for line in textwrap.wrap(text, self.ledW/5):
-                graphics.DrawText(self.canvas, self.fontSm, 1, posX, color, line)
+                graphics.DrawText(self.canvas, self.fontReg, 1, posX, color, line)
                 posX += 8
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             time.sleep(0.1)
 
-    def getCoords(self, id, y, w, h, a='left', color=None, padding = 0, overlapY = False):
-        if color is None:
-            color = [255, 0, 0]
-        if a == 'left':
-            x = 0
-        else:
-            x = 63 - w
-        for mapId in (self.map if a == 'left' else self.map):
-            if mapId == id:
-                break
-            if overlapY == True:
-                break
-            item = self.map[mapId]
-            if item['a'] != a:
-                continue
-            if (y - h) <= item['y'] and y >= (item['y'] - item['h']):
-                if a == 'left':
-                    x = x + item['w'] + 1 + padding
-                else:
-                    x = x - item['w'] - 1 - padding
-        coords = {'id': id, 'x': x, 'y': y, 'w': w, 'h': h, 'a': a}
-        self.map[id] = coords
-
-        # c = graphics.Color(color[0], color[1], color[2])
-        # graphics.DrawLine(self.canvas, coords['x'], coords['y'], coords['x'] + w, coords['y'], c)
-        # graphics.DrawLine(self.canvas, coords['x'], coords['y'] - h, coords['x'] + w, coords['y'] - h, c)
-        # graphics.DrawLine(self.canvas, coords['x'], coords['y'], coords['x'], coords['y'] - h, c)
-        # graphics.DrawLine(self.canvas, coords['x'] + w, coords['y'] - h, coords['x'] + w, coords['y'], c)
-
-        return coords
-
     def drawTime(self, h, m):
-        coords = self.getCoords('clock', self.clockPos[1], 44, 14, 'left')
-        graphics.DrawText(self.canvas, self.fontReg, coords['x'], self.clockPos[1], self.colorW, h)
-        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 17, self.clockPos[1], self.colorW, ':')
-        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 25, self.clockPos[1], self.colorW, m)
+        coords = self.getCoords('clock', w=44, h=14)
+        color = self.getColor('clock')
+        graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, h)
+        graphics.DrawText(self.canvas, self.fontClock, coords['x'] + 17, coords['y'], color, ':')
+        graphics.DrawText(self.canvas, self.fontClock, coords['x'] + 25, coords['y'], color, m)
 
     def drawCo2(self):
         dev_co2 = self.getHassEntity('co2_level')
@@ -190,9 +129,10 @@ class RunText:
             co2text = u'{0}p'.format(int(float(dev_co2)))
         else:
             co2text = 'N/A'
-        width = len(co2text) * self.fontSmW
-        coords = self.getCoords('co2', self.co2Pos[1], width, self.fontSmH, 'left', [255, 0, 255])
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.co2Pos[1], self.co2Color, co2text)
+        width = len(co2text) * self.fontRegW
+        coords = self.getCoords('co2', w=width, h=self.fontRegH)
+        color = self.getColor('co2')
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, co2text)
 
     def drawHumidity(self):
         dev_hum = self.getHassEntity('humidity_inside')
@@ -200,9 +140,10 @@ class RunText:
             hinText = u'{0}%'.format(int(round(float(dev_hum), 0)))
         else:
             hinText = 'N/A'
-        width = len(hinText) * self.fontSmW
-        coords = self.getCoords('hum', self.humPos[1], width, self.fontSmH, color=[255, 100, 100], a='left')
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.humPos[1], self.humColor, hinText)
+        width = len(hinText) * self.fontRegW
+        coords = self.getCoords('hum', h=self.fontRegH, w=width)
+        color = self.getColor('hum')
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, hinText)
 
     def drawWind(self):
         WIND_DIRECTION_MAPPING = {
@@ -223,9 +164,10 @@ class RunText:
         else:
             windSpeedText = 'N/A'
 
-        width = len(windSpeedText) * self.fontSmW
-        coords = self.getCoords('wind', self.windSpPos[1], width, self.fontSmH, a='right', color=[100, 255, 150], padding=0)
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.windSpPos[1], self.windColor, windSpeedText)
+        width = len(windSpeedText) * self.fontRegW
+        coords = self.getCoords('wind', w=width, h=self.fontRegH)
+        color = self.getColor('wind')
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, windSpeedText)
 
     def drawTemp(self, now):
         dev_temp_inside = self.getHassEntity('temp_inside')
@@ -236,11 +178,13 @@ class RunText:
             d = 'A'
 
         width = 17
-        coords = self.getCoords('temp_inside', self.tempPos[1], width, self.fontSmH, a='right', color=[160, 100, 90])
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], self.insideTempColor, u'{0}'.format(r))
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'] + 10, coords['y'], self.insideTempColor, u'{0}'.format(d))
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'] + 14, coords['y'], self.insideTempColor, u'°')
-        self.canvas.SetPixel(coords['x'] + 9, coords['y'] - 1, self.tempDotColor.red, self.tempDotColor.green, self.tempDotColor.blue)
+        coords = self.getCoords('temp_inside', w=width, h=self.fontRegH)
+        color = self.getColor('temp_inside')
+        dot_color = self.getColor('temp_inside', 'dot')
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, u'{0}'.format(r))
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 10, coords['y'], color, u'{0}'.format(d))
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + 14, coords['y'], color, u'°')
+        self.canvas.SetPixel(coords['x'] + 9, coords['y'] - 1, dot_color.red, dot_color.green, dot_color.blue)
 
         if now.second % 10 >= 5:
             dev_temp_outside = self.getHassEntity('temp_outside')
@@ -248,14 +192,14 @@ class RunText:
                 temp = int(round(float(dev_temp_outside), 0))
             else:
                 temp = None
-            col = self.outsideTempColor
+            col = self.getColor('temp_outside')
         else:
             dev_temp_outside = self.getHassEntity('temp_outside_provided')
             if dev_temp_outside is not None:
                 temp = int(round(float(dev_temp_outside), 0))
             else:
                 temp = None
-            col = self.outsideTempYaColor
+            col = self.getColor('temp_outside', 'provided')
 
         if temp is not None:
             sign = self.getSign(temp)
@@ -265,17 +209,18 @@ class RunText:
             sign = '?'
 
         tempStr = u'{0}'.format(temp)
-        width = len(tempStr) * self.fontSmW + len(sign) * self.fontSmmW + 2 # ° correction
-        coords = self.getCoords('temp_outside', self.tempPos[1] + 7, width, self.fontSmH, a='right', overlapY = True, color=[90, 100, 160])
+        width = len(tempStr) * self.fontRegW + len(sign) * self.fontSmW + 2 # ° correction
+
+        coords = self.getCoords('temp_outside', w=width, h=self.fontRegH)
         ofs = 0
         if sign:
-            ofs = self.fontSmmW
-        graphics.DrawText(self.canvas, self.fontSmm, coords['x'], self.tempPos[1] + 7, col, sign)
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'] + ofs, self.tempPos[1] + 7, col, tempStr)
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.tempPos[1] + 7, col, u'°')
+            ofs = self.fontSmW
+        graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], col, sign)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + ofs, coords['y'], col, tempStr)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + width - 3, coords['y'], col, u'°')
 
     def drawForecast(self):
-        c = self.forecastColor
+        c = self.getColor('weather1')
         dev_forecast = self.getHassEntity('forecast')
         if dev_forecast is None:
             return
@@ -284,21 +229,21 @@ class RunText:
             return
 
         fc1 = u'{0}{1}'.format(self.formatDayTime(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['temperature'])))
-        width = len(fc1) * self.fontSmW + 2 # corection for "°"
-        coords = self.getCoords('weather1', self.forecastPos[1], width, self.fontSmH, a='right', color=[100, 100, 255])
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1], c, fc1)
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.forecastPos[1], c, u'°')
+        width = len(fc1) * self.fontRegW + 2 # corection for "°"
+        coords = self.getCoords('weather1', w=width, h=self.fontRegH)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc1)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + width - 3, coords['y'], c, u'°')
 
-        coords = self.getCoords('weather1_icon', self.forecastPos[1], self.imgW, self.imgH, a='right', color=[255, 100, 255])
+        coords = self.getCoords('weather1_icon', w=self.imgW, h=self.imgH)
         self.drawImage(self.getIcon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
 
         fc2 = u'{0}{1}'.format(self.formatDayTime(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['temperature'])))
-        width = len(fc2) * self.fontSmW + 2 # corection for "°"
-        coords = self.getCoords('weather2', self.forecastPos[1] + 8, width, self.fontSmH, a='right', color=[100, 100, 255])
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], self.forecastPos[1] + 8, c, fc2)
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'] + width - 3, self.forecastPos[1] + 8, c, u'°')
+        width = len(fc2) * self.fontRegW + 2 # corection for "°"
+        coords = self.getCoords('weather2', w=width, h=self.fontRegH)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc2)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'] + width - 3, coords['y'], c, u'°')
 
-        coords = self.getCoords('weather2_icon', self.forecastPos[1] + 8, self.imgW, self.imgH, a='right', color=[255, 100, 255])
+        coords = self.getCoords('weather2_icon', w=self.imgW, h=self.imgH)
         self.drawImage(self.getIcon(dev_forecast['forecast_icons'][1]), coords['x'], coords['y'])
 
     def getIcon(self, iconName):
@@ -436,6 +381,45 @@ class RunText:
             if self.snow[i]['y'] > self.ledH - 1:
                 self.snow.pop(i)
 
+    def getCoords(self, id, w, h):
+        color = self.elements[id]["border_color"]
+        align_x = self.elements[id]["align_x"]
+        row = self.elements[id]["row"]
+        rowspan = self.elements[id]["rowspan"] if "rowspan" in self.elements[id] else 1
+
+        if align_x == 'left':
+            x = 0
+        else:
+            x = self.ledW - 1 - w
+        y = self.rowH * (row+rowspan)
+        if self.rowH * rowspan > h:
+            y -= self.rowH * rowspan - h
+
+        for mapId in (self.map if align_x == 'left' else self.map):
+            if mapId == id:
+                break
+            item = self.map[mapId]
+            if item['a'] != align_x:
+                continue
+            if (y - h) <= item['y'] and y >= (item['y'] - item['h']):
+                if align_x == 'left':
+                    x = x + item['w'] + 1
+                else:
+                    x = x - item['w'] - 1
+        coords = {'id': id, 'x': x, 'y': y, 'w': w, 'h': h, 'a': align_x}
+        self.map[id] = coords
+
+        if not self.debugBorders:
+            return coords
+
+        c = graphics.Color(color[0], color[1], color[2])
+        graphics.DrawLine(self.canvas, coords['x'], coords['y'], coords['x'] + w, coords['y'], c)
+        graphics.DrawLine(self.canvas, coords['x'], coords['y'] - h, coords['x'] + w, coords['y'] - h, c)
+        graphics.DrawLine(self.canvas, coords['x'], coords['y'], coords['x'], coords['y'] - h, c)
+        graphics.DrawLine(self.canvas, coords['x'] + w, coords['y'] - h, coords['x'] + w, coords['y'], c)
+
+        return coords
+
     def getColorByPrec(self, prec):
         if prec == 1:
             return [0, random.randint(100, 150), random.randint(200, 255)]
@@ -447,6 +431,29 @@ class RunText:
         elif prec == 3:
             c = random.randint(50, 255)
             return [c, c, c]
+
+    def getColor(self, id, type=None):
+        key = id
+        if type is not None:
+            key = key + "_" + type
+        if key in self.colors:
+            return self.colors[key]
+
+        elem = self.elements[id]
+        color_key = "color"
+        if type is not None:
+            color_key = type + "_color"
+        color_raw = elem[color_key]
+
+        color = graphics.Color(self.c(color_raw[0]), self.c(color_raw[1]), self.c(color_raw[2]))
+        self.colors[key] = color
+
+        return color
+
+    def c(self, col):
+        if col*self.bri>255:
+            return 255
+        return col*self.bri
 
     def formatDayTime(self, time_str):
         dt = datetime.datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f')
@@ -469,7 +476,6 @@ class RunText:
                 self.bri = 0.5
             else:
                 self.matrix.brightness = self.userBrightness
-            self.initColors()
             return
 
         dev_sun = self.getHassEntity('sun_current')
@@ -490,7 +496,6 @@ class RunText:
             self.matrix.brightness = 3
         else:
             self.matrix.brightness = 60
-        self.initColors()
 
     def getHassEntity(self, configKey):
         if configKey not in self.config['devices']:
@@ -527,7 +532,7 @@ class RunText:
             resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])})
         except Exception as e:
             print("Cannot load hass: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontSm, 1, 31, self.colorW, u'HASS ERROR')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.getColor('clock'), u'HASS ERROR')
             return None
 
         if not resp:
@@ -564,7 +569,7 @@ class RunText:
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
         except Exception as e:
             print("Cannot connect to mqtt: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontSm, 1, 26, self.colorW, u'MQTT ERROR')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 26, self.getColor('clock'), u'MQTT ERROR')
             self.mqcl = None
 
     def mqtt_connect(self, client, userdata, flags, rc):

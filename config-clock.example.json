@@ -5,6 +5,68 @@
     "host": "localhost",
     "port": 1883
   },
+  "elements": {
+    "clock": {
+      "row": 0,
+      "rowspan": 2,
+      "align_x": "left",
+      "color": [255, 255, 255],
+      "border_color": [255, 0, 0]
+    },
+    "co2": {
+      "row": 3,
+      "color": [80, 80, 80],
+      "border_color": [255, 0, 255],
+      "align_x": "left"
+    },
+    "hum": {
+      "row": 2,
+      "color": [80, 80, 80],
+      "border_color": [255, 100, 100],
+      "align_x": "left"
+    },
+    "temp_inside": {
+      "row": 0,
+      "color": [2, 100, 12],
+      "dot_color": [110, 0, 0],
+      "border_color": [160, 100, 90],
+      "align_x": "right"
+    },
+    "temp_outside": {
+      "row": 1,
+      "color": [20, 110, 110],
+      "provided_color": [10, 60, 60],
+      "border_color": [90, 100, 160],
+      "align_x": "right"
+    },
+    "weather1": {
+      "row": 2,
+      "color": [60, 20, 60],
+      "border_color": [100, 100, 255],
+      "align_x": "right"
+    },
+    "weather1_icon": {
+      "row": 2,
+      "border_color": [255, 100, 255],
+      "align_x": "right"
+    },
+    "weather2": {
+      "row": 3,
+      "border_color": [100, 100, 255],
+      "align_x": "right"
+    },
+    "weather2_icon": {
+      "row": 3,
+      "border_color": [255, 100, 255],
+      "align_x": "right"
+    },
+    "wind": {
+      "row": 2,
+      "color": [20, 60, 110],
+      "border_color": [100, 255, 150],
+      "align_x": "right"
+    }
+  },
   "devices": {
     "temp_outside": {
       "id" : "sensor.0x00158d0005866d7e_temperature"
