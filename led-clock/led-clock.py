@@ -373,7 +373,8 @@ class RunText:
         else:
             x = self.ledW - 1 - w
         y = self.rowH * (row+rowspan)
-        if self.rowH * rowspan > h:
+        if rowspan > 1 and self.rowH * rowspan > h:
+            # correction to align text to the top if rowspan is used
             y -= self.rowH * rowspan - h
 
         for mapId in (self.map if align_x == 'left' else self.map):
