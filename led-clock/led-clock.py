@@ -32,11 +32,11 @@ class RunText:
 
         self.fontClock = graphics.Font()
         self.fontClock.LoadFont("./fonts/win_crox5h.bdf")
-        self.fontClockH = 18
+        self.fontClockH = 19
         self.fontReg = graphics.Font()
         # self.fontReg.LoadFont("./fonts/win_crox1h.bdf")
         self.fontReg.LoadFont("./fonts/helvR08.bdf")
-        self.fontRegH = 10
+        self.fontRegH = 9
 
         self.imgSize = 8
 
