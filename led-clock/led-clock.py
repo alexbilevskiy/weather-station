@@ -180,7 +180,9 @@ class RunText:
         width = self.calcWidth(text, self.fontReg)
         coords = self.getCoords('temp_inside', w=width, h=self.fontRegH)
         color = self.getColor('temp_inside')
+        color_dot = self.getColor('temp_inside', 'dot')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color_dot, '    . ')
 
         if now.second % 10 >= 5:
             col = self.getColor('temp_outside')
@@ -350,7 +352,7 @@ class RunText:
             if prec_type == 1:
                 self.snow[i]['color'] = self.getColorByPrec(1)
                 self.snow[i]['y'] += 1
-                self.snow[i]['x'] += 0 if self.snow[i]['y'] % horizontalSpeed == 0 else 1
+                self.snow[i]['x'] += 0 if horizontalSpeed == 0 or self.snow[i]['y'] % horizontalSpeed == 0 else 1
             elif prec_type == 2:
                 self.snow[i]['y'] += 1
                 self.snow[i]['x'] += random.randint(0, horizontalSpeed)
