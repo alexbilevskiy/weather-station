@@ -34,9 +34,11 @@ class RunText:
         self.fontClock.LoadFont("./fonts/win_crox5h.bdf")
         self.fontClockH = 19
         self.fontReg = graphics.Font()
-        # self.fontReg.LoadFont("./fonts/win_crox1h.bdf")
         self.fontReg.LoadFont("./fonts/helvR08.bdf")
         self.fontRegH = 9
+        self.fontSm = graphics.Font()
+        self.fontSm.LoadFont("./fonts/b10.bdf")
+        self.fontSmH = 8
 
         self.imgSize = 8
 
@@ -78,6 +80,7 @@ class RunText:
             new = time.time_ns() // 1000000
             diff = next-new
             # self.drawCustomText(str(diff))
+            # self.drawCustomText("Ты пидор")
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             if diff < 0:
                 if diff < -500:
@@ -113,10 +116,10 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
 
     def drawCustomText(self, text):
-        width = self.calcWidth(text, self.fontReg)
-        coords = self.getCoords('custom_text', w=width, h=self.fontClockH)
+        width = self.calcWidth(text, self.fontSm)
+        coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
         color = self.getColor('custom_text')
-        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
+        graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, text)
 
     def drawCo2(self):
         dev_co2 = self.getHassEntity('co2_level')
