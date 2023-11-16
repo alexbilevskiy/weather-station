@@ -418,9 +418,9 @@ class RunText:
             return [c, c, c]
 
     def getColor(self, id, type=None):
-        key = id
+        key = "{0}:{1}".format(self.bri, id)
         if type is not None:
-            key = key + "_" + type
+            key = key + ":" + type
         if key in self.colors:
             return self.colors[key]
 
