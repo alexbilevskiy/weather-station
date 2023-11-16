@@ -45,6 +45,7 @@ class RunText:
         self.rowH = self.fontRegH + 1
 
         self.userBrightness = None
+        self.custom_text = u""
         self.bri = 1
         self.raindrops = []
         self.snow_timer = time.time_ns() // 1000000
@@ -79,8 +80,6 @@ class RunText:
             self.clock()
             new = time.time_ns() // 1000000
             diff = next-new
-            # self.drawCustomText(str(diff))
-            # self.drawCustomText("Ты пидор")
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             if diff < 0:
                 if diff < -500:
@@ -100,6 +99,7 @@ class RunText:
             graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.getColor('clock'), u'NO HASS')
         else:
             self.defineBrightness(now)
+            self.drawCustomText()
             self.drawTemp(now)
             self.drawHumidity()
             self.drawForecast()
@@ -115,11 +115,13 @@ class RunText:
         color = self.getColor('clock')
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
 
-    def drawCustomText(self, text):
-        width = self.calcWidth(text, self.fontSm)
+    def drawCustomText(self):
+        if self.custom_text == '':
+            return
+        width = self.calcWidth(self.custom_text, self.fontSm)
         coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
         color = self.getColor('custom_text')
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, text)
+        graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, self.custom_text)
 
     def drawCo2(self):
         dev_co2 = self.getHassEntity('co2_level')
@@ -568,6 +570,14 @@ class RunText:
 
     def mqtt_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
+        device = {
+            "identifiers": "led-clock",
+            "manufacturer": "noname",
+            "model": "rpi",
+            "name": "LED Panel clock",
+            "sw_version": "0.1.0",
+        }
+
         config = {
             "~": "homeassistant/light/led-clock-brightness",
             "name": "brightness",
@@ -579,52 +589,78 @@ class RunText:
             "icon": "mdi:clock-digital",
             "brightness": True,
             "brightness_scale": 100,
-            "device": {
-                "identifiers": "led-clock",
-                "manufacturer": "noname",
-                "model": "rpi",
-                "name": "LED Panel clock",
-                "sw_version": "0.1.0",
-            }
+            "device": device
         }
         self.mqcl.subscribe(config['~'] + '/#')
         payload = json.dumps(config)
-        # payload = ''
-        print('publish discovery ' + payload)
+        print('publish discovery light ' + payload)
         self.mqcl.publish('homeassistant/light/led-clock-brightness/config', payload=payload, retain=True)
+
+        config = {
+            "~": "homeassistant/text/led-clock-text",
+            "name": "text",
+            "unique_id": "led-clock-text",
+            "object_id": "led-clock-text",
+            "command_topic": "~/set",
+            "state_topic": "~/state",
+            "schema": "json",
+            "icon": "mdi:text-short",
+            "device": device
+        }
+        self.mqcl.subscribe(config['~'] + '/#')
+        payload = json.dumps(config)
+        print('publish discovery text ' + payload)
+        self.mqcl.publish('homeassistant/text/led-clock-text/config', payload=payload, retain=True)
+
+        self.report_brightness_state()
+        self.report_text_state()
 
     def mqtt_disconnect(self, client, userdata, rc):
         print("mqtt disconnected!!!")
         exit()
 
     def mqtt_message(self, client, userdata, msg):
-        #if re.match('.+state$', msg.topic):
-            #self.mqtt_state()
         if re.match('.+set$', msg.topic):
-            cmd = json.loads(msg.payload)
-            if 'state' not in cmd:
-                print('MQTT SET INVALID: ' + str(msg.payload))
-                return
-            if cmd['state'] == 'ON':
-                if 'brightness' in cmd:
-                    self.userBrightness = cmd['brightness']
-                    print('set bri: ' + str(self.userBrightness))
+            # print('MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+            if re.match('.+led-clock-brightness/set$', msg.topic):
+                cmd = json.loads(msg.payload)
+                if 'state' not in cmd:
+                    print('MQTT SET INVALID: ' + str(msg.payload))
+                    return
+                if cmd['state'] == 'ON':
+                    if 'brightness' in cmd:
+                        self.userBrightness = cmd['brightness']
+                        print('set bri: ' + str(self.userBrightness))
+                    else:
+                        self.userBrightness = self.matrix.brightness
                 else:
-                    self.userBrightness = self.matrix.brightness
+                    self.userBrightness = None
+                self.report_brightness_state()
+            elif re.match('.+led-clock-text/set$', msg.topic):
+                print("TEXT SET " + str(msg.payload))
+                self.custom_text = msg.payload.decode()
+                self.report_text_state()
             else:
-                self.userBrightness = None
-            self.mqtt_state()
+                print('UNKNOWN MQTT STATE TOPIC: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+        elif re.match('.+led-clock-.+/config$', msg.topic):
+            # self config
+            return
         else:
-            print('MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+            print('UNKNOWN MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
-    def mqtt_state(self):
+    def report_brightness_state(self):
         if self.userBrightness:
             state = {"state": "ON", "brightness": self.userBrightness}
         else:
             state = {"state": "OFF"}
         payload = json.dumps(state)
-        print('publish state ' + payload)
+        print('publish light state ' + payload)
         self.mqcl.publish('homeassistant/light/led-clock-brightness/state', payload=payload)
+
+    def report_text_state(self):
+        payload = self.custom_text
+        print('publish text state ' + payload)
+        self.mqcl.publish('homeassistant/light/led-clock-text/state', payload=self.custom_text)
 
     def getSign(self, num):
         if num is None:
