@@ -44,8 +44,8 @@ class RunText:
 
         self.userBrightness = None
         self.bri = 1
-        self.snow = []
-        self.snowTimer = time.time()
+        self.raindrops = []
+        self.snow_timer = time.time_ns() // 1000000
 
         options = RGBMatrixOptions()
         options.rows = self.ledH
@@ -70,21 +70,23 @@ class RunText:
 
     def run(self):
         while True:
+            self.canvas.Clear()
+
             now = time.time_ns() // 1000000
             next = now + self.delay * 1000
             self.clock()
             new = time.time_ns() // 1000000
             diff = next-new
+            # self.drawCustomText(str(diff))
+            self.canvas = self.matrix.SwapOnVSync(self.canvas)
             if diff < 0:
-                #print("LAG " + str(diff) + "ms")
+                if diff < -500:
+                    print("LAG " + str(abs(diff)) + "ms")
                 continue
-            #print("SLEEP " + str(diff) + "ms")
+            # print("SLEEP " + str(diff) + "ms")
             time.sleep(diff / 1000)
 
     def clock(self):
-        self.canvas.Clear()
-        #graphics.DrawText(self.canvas, self.fontSm, 64, 10, self.colorW, u'TEST PANEL 2')
-        #graphics.DrawText(self.canvas, self.fontSm, 64, 20, self.colorG, u'MEOW MEOW')
         now = datetime.datetime.now()
         self.drawTime(now)
 
@@ -103,28 +105,18 @@ class RunText:
             self.drawSky()
             self.drawPrecip()
 
-
-        self.canvas = self.matrix.SwapOnVSync(self.canvas)
-
-    def printText(self, text):
-        self.canvas.Clear()
-        now = int(time.time())
-        while int(time.time()) < now + 5:
-            self.canvas.Clear()
-            posX = 8
-            color = graphics.Color(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-            for line in textwrap.wrap(text, self.ledW/5):
-                graphics.DrawText(self.canvas, self.fontReg, 1, posX, color, line)
-                posX += 8
-            self.canvas = self.matrix.SwapOnVSync(self.canvas)
-            time.sleep(0.1)
-
     def drawTime(self, now):
         text = now.strftime("%H:%M")
         width = self.calcWidth(text, self.fontClock)
         coords = self.getCoords('clock', w=width, h=self.fontClockH)
         color = self.getColor('clock')
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
+
+    def drawCustomText(self, text):
+        width = self.calcWidth(text, self.fontReg)
+        coords = self.getCoords('custom_text', w=width, h=self.fontClockH)
+        color = self.getColor('custom_text')
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
     def drawCo2(self):
         dev_co2 = self.getHassEntity('co2_level')
@@ -312,57 +304,69 @@ class RunText:
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             return
 
-        maxFlakes = int(self.ledH * prec_strength)
+        max_drops = int(self.ledH * prec_strength)
         minX = 0
-        speed = 10 # pixels per second
+        speed_rain = 100 # pixels per second
+        speed_snow = 15
+        speed_wet_snow = 25
         if prec_type == 0: # no precipitation
-            self.delay = 0.05
+            self.delay = 0.5
             return
-        elif prec_type == 1: # rain
-            # self.delay = 0.01
-            speed = 30
-        elif prec_type == 2: # rain + snow
-            # self.delay = 0.04
-            speed = 15
-        elif prec_type == 3: # snow
-            # self.delay = 0.05
-            speed = 6
-        self.delay = 0
+        self.delay = 0.02
 
-        delay = 1 / speed
-        interval = self.ledH / (maxFlakes * speed)
-        horizontalSpeed = int(wind_speed/2)
-        if horizontalSpeed > 0:
-            minX = -32
+        interval = self.ledH / (max_drops * speed_snow)
 
-        nowMicro = datetime.datetime.now().timestamp()
-        if (len(self.snow) < maxFlakes) and (nowMicro - self.snowTimer > interval):
+        horizontal_speed = int(wind_speed/2)
+        if horizontal_speed > 0:
+            minX = - self.ledH
+
+        now_micro = time.time_ns() // 1000000
+        if (len(self.raindrops) < max_drops) and (now_micro - self.snow_timer > interval * 1000):
             startY = 0
-            self.snow.append({'x': random.randint(minX, self.ledW - 1), 'y': startY, 'timer': time.time(), 'color': self.getColorByPrec(prec_type)})
-            self.snowTimer = nowMicro
-
-        for i, f in enumerate(self.snow):
-            self.canvas.SetPixel(f['x'], f['y'], f['color'][0], f['color'][1], f['color'][2])
-            if nowMicro - self.snow[i]['timer'] < delay:
-                continue
-            # realSpeed = 1 / (nowMicro - self.snow[i]['timer'])
-            # print('real speed: ' + str(realSpeed))
-            self.snow[i]['timer'] = nowMicro
-
             if prec_type == 1:
-                self.snow[i]['color'] = self.getColorByPrec(1)
-                self.snow[i]['y'] += 1
-                self.snow[i]['x'] += 0 if horizontalSpeed == 0 or self.snow[i]['y'] % horizontalSpeed == 0 else 1
+                drop_type = 'rain'
+                speed = speed_rain
             elif prec_type == 2:
-                self.snow[i]['y'] += 1
-                self.snow[i]['x'] += random.randint(0, horizontalSpeed)
+                if random.randint(0, 1) == 1:
+                    drop_type = 'rain'
+                    speed = speed_rain
+                else:
+                    drop_type = 'wet_snow'
+                    speed = speed_wet_snow
             elif prec_type == 3:
-                self.snow[i]['color'] = self.getColorByPrec(3)
-                self.snow[i]['y'] += 1
-                self.snow[i]['x'] += random.randint(-1, 1)
+                drop_type = 'snow'
+                speed = speed_snow
+            delay = 1 / speed
+            # print("{0}: {1}".format(drop_type, str(delay)))
+            # interval = self.ledH / (max_drops * speed)
+            self.raindrops.append({'x': random.randint(minX, self.ledW - 1), 'y': startY, 'timer': time.time_ns() // 1000000, 'color': self.getColorByPrec(drop_type), 'type': drop_type, 'delay': delay})
+            self.snow_timer = now_micro
 
-            if self.snow[i]['y'] > self.ledH - 1:
-                self.snow.pop(i)
+        for i, f in enumerate(self.raindrops):
+            self.canvas.SetPixel(f['x'], f['y'], f['color'][0], f['color'][1], f['color'][2])
+            delta = now_micro - self.raindrops[i]['timer']
+            drop_delay = self.raindrops[i]['delay'] * 1000
+            if delta < drop_delay:
+                continue
+            distance = int(round(delta / drop_delay))
+            # realSpeed = 1 / (now_micro - self.raindrops[i]['timer'])
+            # print('real speed: ' + str(realSpeed))
+            self.raindrops[i]['timer'] = now_micro
+
+            self.raindrops[i]['color'] = self.getColorByPrec(self.raindrops[i]['type'])
+            if self.raindrops[i]['type'] == 'rain':
+                self.raindrops[i]['y'] += distance
+                self.raindrops[i]['x'] += 0 if horizontal_speed == 0 or self.raindrops[i]['y'] % horizontal_speed == 0 else 1
+            if self.raindrops[i]['type'] == 'wet_snow':
+                self.raindrops[i]['y'] += distance
+                self.raindrops[i]['x'] += random.randint(-1, 1)
+            if self.raindrops[i]['type'] == 'snow':
+                self.raindrops[i]['color'] = self.getColorByPrec(3)
+                self.raindrops[i]['y'] += distance
+                self.raindrops[i]['x'] += random.randint(-1, 1)
+
+            if self.raindrops[i]['y'] > self.ledH - 1:
+                self.raindrops.pop(i)
 
     def getCoords(self, id, w, h):
         color = self.elements[id]["border_color"]
@@ -404,15 +408,12 @@ class RunText:
 
         return coords
 
-    def getColorByPrec(self, prec):
-        if prec == 1:
+    def getColorByPrec(self, prec_type):
+        if prec_type == 'rain':
             return [0, random.randint(100, 150), random.randint(200, 255)]
-        elif prec == 2:
-            if random.randint(0, 1) == 1:
+        elif prec_type == 'wet_snow':
                 return [random.randint(100, 150), random.randint(100, 150), random.randint(100, 150)]
-            else:
-                return [0, random.randint(100, 150), random.randint(200, 255)]
-        elif prec == 3:
+        elif prec_type == 'snow':
             c = random.randint(50, 255)
             return [c, c, c]
 
