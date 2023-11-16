@@ -569,17 +569,29 @@ class RunText:
     def mqtt_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
         config = {
-            "~": "homeassistant/light/led-clock",
-            "name": "Led clock",
-            "unique_id": "led-clock",
+            "~": "homeassistant/light/led-clock-brightness",
+            "name": "brightness",
+            "unique_id": "led-clock-brightness",
+            "object_id": "led-clock-brightness",
             "command_topic": "~/set",
             "state_topic": "~/state",
             "schema": "json",
+            "icon": "mdi:clock-digital",
             "brightness": True,
-            "brightness_scale": 100
+            "brightness_scale": 100,
+            "device": {
+                "identifiers": "led-clock",
+                "manufacturer": "noname",
+                "model": "rpi",
+                "name": "LED Panel clock",
+                "sw_version": "0.1.0",
+            }
         }
         self.mqcl.subscribe(config['~'] + '/#')
-        self.mqcl.publish('homeassistant/light/led-clock/config', payload=json.dumps(config), retain=True)
+        payload = json.dumps(config)
+        # payload = ''
+        print('publish discovery ' + payload)
+        self.mqcl.publish('homeassistant/light/led-clock-brightness/config', payload=payload, retain=True)
 
     def mqtt_disconnect(self, client, userdata, rc):
         print("mqtt disconnected!!!")
@@ -603,15 +615,16 @@ class RunText:
                 self.userBrightness = None
             self.mqtt_state()
         else:
-            print('MQTT: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+            print('MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
     def mqtt_state(self):
         if self.userBrightness:
             state = {"state": "ON", "brightness": self.userBrightness}
         else:
             state = {"state": "OFF"}
-        #print('publish state ' + json.dumps(state))
-        self.mqcl.publish('homeassistant/light/led-clock/state', json.dumps(state))
+        payload = json.dumps(state)
+        print('publish state ' + payload)
+        self.mqcl.publish('homeassistant/light/led-clock-brightness/state', payload=payload)
 
     def getSign(self, num):
         if num is None:
