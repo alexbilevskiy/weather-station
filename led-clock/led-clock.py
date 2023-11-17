@@ -120,10 +120,31 @@ class RunText:
     def drawCustomText(self):
         if self.custom_text == '':
             return
-        width = self.calcWidth(self.custom_text, self.fontSm)
-        coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
         color = self.getColor('custom_text')
-        graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, self.custom_text)
+        width = self.calcWidth(self.custom_text, self.fontSm)
+        cut_at = len(self.custom_text) - 1
+        was_cut = False
+        if width > self.ledW:
+            was_cut = True
+            while width > self.ledW or cut_at == 0:
+                cut_at -= 1
+                if self.custom_text[cut_at] != " ":
+                    continue
+                width = self.calcWidth(self.custom_text[:cut_at], self.fontSm)
+            if cut_at == 0:
+                cut_at = len(self.custom_text) - 1
+                #nowhere to cut by space
+                while width > self.ledW or cut_at == 0:
+                    cut_at -= 1
+                    width = self.calcWidth(self.custom_text[:cut_at], self.fontSm)
+
+        if was_cut:
+            coords = self.getCoords('custom_text', w=width, h=self.fontSmH * 2)
+            graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3 - self.fontSmH + 2, color, self.custom_text[:cut_at])
+            graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3, color, self.custom_text[cut_at:])
+        else:
+            coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
+            graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, self.custom_text)
 
     def drawCo2(self):
         dev_co2 = self.getHassEntity('co2_level')
@@ -379,14 +400,14 @@ class RunText:
         align_x = self.elements[id]["align_x"]
         row = self.elements[id]["row"]
         rowspan = self.elements[id]["rowspan"] if "rowspan" in self.elements[id] else 1
+        align_y = self.elements[id]["align_y"] if "align_y" in self.elements[id] else "bottom"
 
         if align_x == 'left':
             x = 0
         else:
             x = self.ledW - 1 - w
         y = self.rowH * (row+rowspan)
-        if rowspan > 1 and self.rowH * rowspan > h:
-            # correction to align text to the top if rowspan is used
+        if align_y == 'top' and rowspan > 1 and self.rowH * rowspan > h:
             y -= self.rowH * rowspan - h
 
         for mapId in (self.map if align_x == 'left' else self.map):
