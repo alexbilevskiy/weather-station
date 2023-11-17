@@ -3,7 +3,9 @@
   "mqtt": {
     "enabled": true,
     "host": "localhost",
-    "port": 1883
+    "port": 1883,
+    "device_id": "led-clock",
+    "hass_discovery_prefix": "homeassistant"
   },
   "elements": {
     "clock": {
@@ -70,6 +72,14 @@
       "color": [20, 60, 110],
       "border_color": [100, 255, 150],
       "align_x": "right"
+    },
+    "custom_text": {
+      "rowspan": 2,
+      "row": 4,
+      "color": [80, 80, 80],
+      "border_color": [100, 255, 150],
+      "align_x": "left",
+      "align_y": "bottom"
     }
   },
   "devices": {

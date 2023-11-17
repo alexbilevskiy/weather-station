@@ -22,6 +22,8 @@ class RunText:
         self.colors = collections.OrderedDict()
 
         self.mqcl = None
+        self.mqtt_root_topic = None
+        self.mqtt_device = None
 
         self.icons = {}
         self.ledW = 128
@@ -366,7 +368,6 @@ class RunText:
                 self.raindrops[i]['y'] += distance
                 self.raindrops[i]['x'] += random.randint(-1, 1)
             if self.raindrops[i]['type'] == 'snow':
-                self.raindrops[i]['color'] = self.getColorByPrec(3)
                 self.raindrops[i]['y'] += distance
                 self.raindrops[i]['x'] += random.randint(-1, 1)
 
@@ -556,11 +557,21 @@ class RunText:
             self.mqcl.loop(0)
             return
 
-        self.mqcl = mqtt.Client("led-clock")
+        self.mqtt_device = {
+            "identifiers": self.config['mqtt']['device_id'],
+            "manufacturer": "noname",
+            "model": "rpi",
+            "name": "LED Panel clock",
+            "sw_version": "0.1.0",
+        }
+        self.mqtt_root_topic = "led-clock/{0}".format(self.mqtt_device['identifiers'])
+
+        self.mqcl = mqtt.Client(self.config['mqtt']['device_id'])
         self.mqcl.enable_logger()
         self.mqcl.on_connect = self.mqtt_connect
         self.mqcl.on_disconnect = self.mqtt_disconnect
         self.mqcl.on_message = self.mqtt_message
+        self.mqcl.will_set("{0}/availability".format(self.mqtt_root_topic), payload=b"offline", retain=False)
         try:
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
         except Exception as e:
@@ -569,84 +580,82 @@ class RunText:
             self.mqcl = None
 
     def mqtt_connect(self, client, userdata, flags, rc):
-        print("Connected with result code "+str(rc))
-        device = {
-            "identifiers": "led-clock",
-            "manufacturer": "noname",
-            "model": "rpi",
-            "name": "LED Panel clock",
-            "sw_version": "0.1.0",
-        }
-
-        config = {
-            "~": "homeassistant/light/led-clock-brightness",
-            "name": "brightness",
-            "unique_id": "led-clock-brightness",
-            "object_id": "led-clock-brightness",
-            "command_topic": "~/set",
-            "state_topic": "~/state",
-            "schema": "json",
-            "icon": "mdi:clock-digital",
-            "brightness": True,
-            "brightness_scale": 100,
-            "device": device
-        }
-        self.mqcl.subscribe(config['~'] + '/#')
-        payload = json.dumps(config)
-        print('publish discovery light ' + payload)
-        self.mqcl.publish('homeassistant/light/led-clock-brightness/config', payload=payload, retain=True)
-
-        config = {
-            "~": "homeassistant/text/led-clock-text",
-            "name": "text",
-            "unique_id": "led-clock-text",
-            "object_id": "led-clock-text",
-            "command_topic": "~/set",
-            "state_topic": "~/state",
-            "schema": "json",
-            "icon": "mdi:text-short",
-            "device": device
-        }
-        self.mqcl.subscribe(config['~'] + '/#')
-        payload = json.dumps(config)
-        print('publish discovery text ' + payload)
-        self.mqcl.publish('homeassistant/text/led-clock-text/config', payload=payload, retain=True)
-
-        self.report_brightness_state()
-        self.report_text_state()
+        print("mqtt connected with result code "+str(rc))
+        self.mqtt_discovery_brightness()
+        self.mqtt_discovery_text()
 
     def mqtt_disconnect(self, client, userdata, rc):
         print("mqtt disconnected!!!")
         exit()
 
     def mqtt_message(self, client, userdata, msg):
-        if re.match('.+set$', msg.topic):
-            # print('MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
-            if re.match('.+led-clock-brightness/set$', msg.topic):
-                cmd = json.loads(msg.payload)
-                if 'state' not in cmd:
-                    print('MQTT SET INVALID: ' + str(msg.payload))
-                    return
-                if cmd['state'] == 'ON':
-                    if 'brightness' in cmd:
-                        self.userBrightness = cmd['brightness']
-                        print('set bri: ' + str(self.userBrightness))
-                    else:
-                        self.userBrightness = self.matrix.brightness
+        # print('MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+        if re.match('.+/brightness_set$', msg.topic):
+            cmd = json.loads(msg.payload)
+            if 'state' not in cmd:
+                print('MQTT BRIGHTNESS SET INVALID: ' + str(msg.payload))
+                return
+            if cmd['state'] == 'ON':
+                if 'brightness' in cmd:
+                    self.userBrightness = cmd['brightness']
+                    print('set bri: ' + str(self.userBrightness))
                 else:
-                    self.userBrightness = None
-                self.report_brightness_state()
-            elif re.match('.+led-clock-text/set$', msg.topic):
-                print("TEXT SET " + str(msg.payload))
-                self.custom_text = msg.payload.decode()
-                self.report_text_state()
+                    self.userBrightness = self.matrix.brightness
             else:
-                print('UNKNOWN MQTT STATE TOPIC: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
-        elif re.match('.+led-clock-.+/config$', msg.topic):
-            # self config
-            return
+                self.userBrightness = None
+            self.report_brightness_state()
+        elif re.match('.+/text_set$', msg.topic):
+            print("MQTT TEXT SET " + str(msg.payload))
+            self.custom_text = msg.payload.decode()
+            self.report_text_state()
         else:
             print('UNKNOWN MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+
+    def mqtt_discovery_brightness(self):
+        discovery_topic = "{0}/light/{1}-brightness/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        service_config = {
+            "name": "brightness",
+            "unique_id": "{0}-brightness".format(self.mqtt_device['identifiers']),
+            "object_id": "{0}-brightness".format(self.mqtt_device['identifiers']),
+            "command_topic": "{0}/brightness_set".format(self.mqtt_root_topic),
+            "state_topic": "{0}/brightness_state".format(self.mqtt_root_topic),
+            "availability": {
+                "topic": "{0}/availability".format(self.mqtt_root_topic)
+            },
+            "schema": "json",
+            "icon": "mdi:clock-digital",
+            "brightness": True,
+            "brightness_scale": 100,
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print('publish discovery light ' + payload)
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_brightness_state()
+        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=False)
+
+    def mqtt_discovery_text(self):
+        discovery_topic = "{0}/text/{1}-text/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        service_config = {
+            "name": "text",
+            "unique_id": "{0}-text".format(self.mqtt_device['identifiers']),
+            "object_id": "{0}-text".format(self.mqtt_device['identifiers']),
+            "command_topic": "{0}/text_set".format(self.mqtt_root_topic),
+            "state_topic": "{0}/text_state".format(self.mqtt_root_topic),
+            "availability": {
+                "topic": "{0}/availability".format(self.mqtt_root_topic)
+            },
+            "schema": "json",
+            "icon": "mdi:text-short",
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print('publish discovery text ' + payload)
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_text_state()
+        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=False)
 
     def report_brightness_state(self):
         if self.userBrightness:
@@ -655,12 +664,12 @@ class RunText:
             state = {"state": "OFF"}
         payload = json.dumps(state)
         print('publish light state ' + payload)
-        self.mqcl.publish('homeassistant/light/led-clock-brightness/state', payload=payload)
+        self.mqcl.publish("{0}/brightness_state".format(self.mqtt_root_topic), payload=payload)
 
     def report_text_state(self):
         payload = self.custom_text
-        print('publish text state ' + payload)
-        self.mqcl.publish('homeassistant/light/led-clock-text/state', payload=self.custom_text)
+        print('publish text state `{0}`'.format(payload))
+        self.mqcl.publish("{0}/text_state".format(self.mqtt_root_topic), payload=payload)
 
     def getSign(self, num):
         if num is None:
