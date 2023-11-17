@@ -403,7 +403,7 @@ class RunText:
         align_y = self.elements[id]["align_y"] if "align_y" in self.elements[id] else "bottom"
 
         if align_x == 'left':
-            x = 0
+            x = 1
         else:
             x = self.ledW - 1 - w
         y = self.rowH * (row+rowspan)
