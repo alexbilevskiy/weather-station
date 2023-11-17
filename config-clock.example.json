@@ -74,8 +74,7 @@
       "align_x": "right"
     },
     "custom_text": {
-      "rowspan": 2,
-      "row": 4,
+      "row": 5,
       "color": [80, 80, 80],
       "border_color": [100, 255, 150],
       "align_x": "left",

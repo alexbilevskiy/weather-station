@@ -139,7 +139,7 @@ class RunText:
                     width = self.calcWidth(self.custom_text[:cut_at], self.fontSm)
 
         if was_cut:
-            coords = self.getCoords('custom_text', w=width, h=self.fontSmH * 2)
+            coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3 - self.fontSmH + 2, color, self.custom_text[:cut_at])
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3, color, self.custom_text[cut_at:])
         else:
