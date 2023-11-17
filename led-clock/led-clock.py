@@ -30,7 +30,7 @@ class RunText:
         self.ledH = 64
         self.delay = 0.05
 
-        self.debugBorders = False
+        self.debug_borders = False
 
         self.fontClock = graphics.Font()
         self.fontClock.LoadFont("./fonts/win_crox5h.bdf")
@@ -92,36 +92,36 @@ class RunText:
 
     def clock(self):
         now = datetime.datetime.now()
-        self.drawTime(now)
+        self.draw_time(now)
 
-        self.mqttLoop()
+        self.mqtt_loop()
 
-        hass = self.readHass()
+        hass = self.read_hass()
         if not hass:
-            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.getColor('clock'), u'NO HASS')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.get_color('clock'), u'NO HASS')
         else:
-            self.defineBrightness(now)
-            self.drawCustomText()
-            self.drawTemp(now)
-            self.drawHumidity()
-            self.drawForecast()
-            self.drawWind()
-            self.drawCo2()
-            self.drawSky()
-            self.drawPrecip()
+            self.define_brightness(now)
+            self.draw_custom_text()
+            self.draw_temp(now)
+            self.draw_humidity()
+            self.draw_forecast()
+            self.draw_wind()
+            self.draw_co2()
+            self.draw_sky()
+            self.draw_precip()
 
-    def drawTime(self, now):
+    def draw_time(self, now):
         text = now.strftime("%H:%M")
-        width = self.calcWidth(text, self.fontClock)
-        coords = self.getCoords('clock', w=width, h=self.fontClockH)
-        color = self.getColor('clock')
+        width = self.calc_width(text, self.fontClock)
+        coords = self.get_coords('clock', w=width, h=self.fontClockH)
+        color = self.get_color('clock')
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
 
-    def drawCustomText(self):
+    def draw_custom_text(self):
         if self.custom_text == '':
             return
-        color = self.getColor('custom_text')
-        width = self.calcWidth(self.custom_text, self.fontSm)
+        color = self.get_color('custom_text')
+        width = self.calc_width(self.custom_text, self.fontSm)
         cut_at = len(self.custom_text) - 1
         was_cut = False
         if width > self.ledW:
@@ -130,45 +130,45 @@ class RunText:
                 cut_at -= 1
                 if self.custom_text[cut_at] != " ":
                     continue
-                width = self.calcWidth(self.custom_text[:cut_at], self.fontSm)
+                width = self.calc_width(self.custom_text[:cut_at], self.fontSm)
             if cut_at == 0:
                 cut_at = len(self.custom_text) - 1
                 #nowhere to cut by space
                 while width > self.ledW or cut_at == 0:
                     cut_at -= 1
-                    width = self.calcWidth(self.custom_text[:cut_at], self.fontSm)
+                    width = self.calc_width(self.custom_text[:cut_at], self.fontSm)
 
         if was_cut:
-            coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
+            coords = self.get_coords('custom_text', w=width, h=self.fontSmH)
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3 - self.fontSmH + 2, color, self.custom_text[:cut_at])
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3, color, self.custom_text[cut_at:])
         else:
-            coords = self.getCoords('custom_text', w=width, h=self.fontSmH)
+            coords = self.get_coords('custom_text', w=width, h=self.fontSmH)
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, self.custom_text)
 
-    def drawCo2(self):
-        dev_co2 = self.getHassEntity('co2_level')
+    def draw_co2(self):
+        dev_co2 = self.get_hass_entity('co2_level')
         if dev_co2 is not None:
             text = u'{0}ppm'.format(int(float(dev_co2)))
         else:
             text = 'N/A'
-        width = self.calcWidth(text, self.fontReg)
-        coords = self.getCoords('co2', w=width, h=self.fontRegH)
-        color = self.getColor('co2')
+        width = self.calc_width(text, self.fontReg)
+        coords = self.get_coords('co2', w=width, h=self.fontRegH)
+        color = self.get_color('co2')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
-    def drawHumidity(self):
-        dev_hum = self.getHassEntity('humidity_inside')
+    def draw_humidity(self):
+        dev_hum = self.get_hass_entity('humidity_inside')
         if dev_hum is not None:
             text = u'{0}%'.format(int(round(float(dev_hum), 0)))
         else:
             text = 'N/A'
-        width = self.calcWidth(text, self.fontReg)
-        coords = self.getCoords('hum', h=self.fontRegH, w=width)
-        color = self.getColor('hum')
+        width = self.calc_width(text, self.fontReg)
+        coords = self.get_coords('hum', h=self.fontRegH, w=width)
+        color = self.get_color('hum')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
-    def drawWind(self):
+    def draw_wind(self):
         WIND_DIRECTION_MAPPING = {
             315: "nw",
             360: "n",
@@ -180,152 +180,150 @@ class RunText:
             270: "w",
             0: "c",
         }
-        dev_wind_speed = self.getHassEntity('wind_speed')
-        dev_wind_bearing = self.getHassEntity('wind_bearing')
+        dev_wind_speed = self.get_hass_entity('wind_speed')
+        dev_wind_bearing = self.get_hass_entity('wind_bearing')
         text = 'N/A'
         if dev_wind_bearing is not None and dev_wind_speed is not None:
             text = u'{1} {0}m/s'.format(int(round(float(dev_wind_speed), 0)), WIND_DIRECTION_MAPPING[dev_wind_bearing])
 
-        width = self.calcWidth(text, self.fontReg)
-        coords = self.getCoords('wind', w=width, h=self.fontRegH)
-        color = self.getColor('wind')
+        width = self.calc_width(text, self.fontReg)
+        coords = self.get_coords('wind', w=width, h=self.fontRegH)
+        color = self.get_color('wind')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
-    def drawTemp(self, now):
-        dev_temp_inside = self.getHassEntity('temp_inside')
+    def draw_temp(self, now):
+        dev_temp_inside = self.get_hass_entity('temp_inside')
         text = 'N/A'
         if dev_temp_inside is not None:
             text = u'{0}°'.format(round(float(dev_temp_inside), 1))
 
-        width = self.calcWidth(text, self.fontReg)
-        coords = self.getCoords('temp_inside', w=width, h=self.fontRegH)
-        color = self.getColor('temp_inside')
-        color_dot = self.getColor('temp_inside', 'dot')
+        width = self.calc_width(text, self.fontReg)
+        coords = self.get_coords('temp_inside', w=width, h=self.fontRegH)
+        color = self.get_color('temp_inside')
+        color_dot = self.get_color('temp_inside', 'dot')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color_dot, '    . ')
 
         if now.second % 10 >= 5:
-            col = self.getColor('temp_outside')
-            dev_temp_outside = self.getHassEntity('temp_outside')
+            col = self.get_color('temp_outside')
+            dev_temp_outside = self.get_hass_entity('temp_outside')
         else:
-            col = self.getColor('temp_outside', 'provided')
-            dev_temp_outside = self.getHassEntity('temp_outside_provided')
+            col = self.get_color('temp_outside', 'provided')
+            dev_temp_outside = self.get_hass_entity('temp_outside_provided')
 
         text = 'N/A'
         if dev_temp_outside is not None:
             text = u'{0}°'.format(int(round(float(dev_temp_outside), 0)))
 
-        width = self.calcWidth(text, self.fontReg)
-        coords = self.getCoords('temp_outside', w=width, h=self.fontRegH)
+        width = self.calc_width(text, self.fontReg)
+        coords = self.get_coords('temp_outside', w=width, h=self.fontRegH)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], col, text)
 
-        dev_current_icon = self.getHassEntity('current_weather_icon')
+        dev_current_icon = self.get_hass_entity('current_weather_icon')
         if dev_current_icon is None:
             return
-        coords = self.getCoords('outside_icon', w=self.imgSize, h=self.imgSize)
-        self.drawImage(self.getIcon(dev_current_icon), coords['x'], coords['y'])
+        coords = self.get_coords('outside_icon', w=self.imgSize, h=self.imgSize)
+        self.draw_image(self.get_icon(dev_current_icon), coords['x'], coords['y'])
 
-    def drawForecast(self):
-        c = self.getColor('weather1')
-        dev_forecast = self.getHassEntity('forecast')
+    def draw_forecast(self):
+        c = self.get_color('weather1')
+        dev_forecast = self.get_hass_entity('forecast')
         if dev_forecast is None:
             return
 
         if len(dev_forecast['forecast']) < 2:
             return
 
-        fc1 = u'{0}{1}°'.format(self.formatDayTime(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['temperature'])))
-        coords = self.getCoords('weather1', w=self.calcWidth(fc1, self.fontReg), h=self.fontRegH)
+        fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['temperature'])))
+        coords = self.get_coords('weather1', w=self.calc_width(fc1, self.fontReg), h=self.fontRegH)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc1)
 
-        coords = self.getCoords('weather1_icon', w=self.imgSize, h=self.imgSize)
-        self.drawImage(self.getIcon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
+        coords = self.get_coords('weather1_icon', w=self.imgSize, h=self.imgSize)
+        self.draw_image(self.get_icon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
 
-        fc2 = u'{0}{1}°'.format(self.formatDayTime(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['temperature'])))
-        coords = self.getCoords('weather2', w=self.calcWidth(fc2, self.fontReg), h=self.fontRegH)
+        fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['temperature'])))
+        coords = self.get_coords('weather2', w=self.calc_width(fc2, self.fontReg), h=self.fontRegH)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc2)
 
-        coords = self.getCoords('weather2_icon', w=self.imgSize, h=self.imgSize)
-        self.drawImage(self.getIcon(dev_forecast['forecast_icons'][1]), coords['x'], coords['y'])
+        coords = self.get_coords('weather2_icon', w=self.imgSize, h=self.imgSize)
+        self.draw_image(self.get_icon(dev_forecast['forecast_icons'][1]), coords['x'], coords['y'])
 
-    def getIcon(self, iconName):
+    def get_icon(self, icon_name):
         #https://yastatic.net/weather/i/icons/islands/32/
-        if iconName in self.icons:
-            return self.icons[iconName]
-        imgSize = 8
-        i8 = '/opt/src/weather-station/icons8/{0}_{1}.png'.format(iconName, imgSize)
+        if icon_name in self.icons:
+            return self.icons[icon_name]
+        img_size = 8
+        i8 = '/opt/src/weather-station/icons8/{0}_{1}.png'.format(icon_name, img_size)
         if os.path.isfile(i8):
             i = Image.open(i8).resize((self.imgSize, self.imgSize), Image.HAMMING)
         else:
-            i = Image.open('/opt/src/weather-station/icons/' + iconName + '.png').resize((self.imgSize, self.imgSize), Image.HAMMING)
+            i = Image.open('/opt/src/weather-station/icons/' + icon_name + '.png').resize((self.imgSize, self.imgSize), Image.HAMMING)
         m = Image.new('RGB', i.size, "BLACK")
         m.paste(i, (0, 0), i)
-        self.icons[iconName] = m
-        return self.icons[iconName]
+        self.icons[icon_name] = m
+        return self.icons[icon_name]
 
-    def drawImage(self, image, posX, posY):
+    def draw_image(self, image, pos_x, pos_y):
         img_width, img_height = image.size
-        posY -= self.imgSize
+        pos_y -= self.imgSize
         pixels = image.load()
-        for x in range(max(0, -posX), min(img_width, self.ledW - posX)):
-            for y in range(max(0, -posY), min(img_height, self.ledH - posY)):
+        for x in range(max(0, -pos_x), min(img_width, self.ledW - pos_x)):
+            for y in range(max(0, -pos_y), min(img_height, self.ledH - pos_y)):
                 (r, g, b) = pixels[x, y]
                 if r == g == b == 0:
                     continue
-                self.canvas.SetPixel(x + posX, y + posY, self.c(r*0.7), self.c(g*0.7), self.c(b*0.7))
+                self.canvas.SetPixel(x + pos_x, y + pos_y, self.c(r * 0.7), self.c(g * 0.7), self.c(b * 0.7))
 
-    def drawSky(self):
-        dev_sun = self.getHassEntity('sun_period')
+    def draw_sky(self):
+        dev_sun = self.get_hass_entity('sun_period')
         if dev_sun is None:
             return
 
-        curTime = datetime.datetime.now()
+        cur_time = datetime.datetime.now()
 
         sr = datetime.datetime.fromisoformat(dev_sun['next_rising'])
         ss = datetime.datetime.fromisoformat(dev_sun['next_setting'])
-        dayLen = 0
+        day_len = 0
         day = True
         if sr > ss:
             #day
-            dayLen = (ss-sr).total_seconds()+86400
+            day_len = (ss-sr).total_seconds()+86400
         elif sr < ss:
             #night
             day = False
-            dayLen = (ss-sr).total_seconds()
-        nightLen = 86400 - dayLen
+            day_len = (ss-sr).total_seconds()
+        night_len = 86400 - day_len
 
         if day:
             r=255
             g=150
             b=0
-            perc = (curTime.timestamp() + 86400 - sr.timestamp()) / dayLen
+            perc = (cur_time.timestamp() + 86400 - sr.timestamp()) / day_len
         else:
             r=0
             g=0
             b=150
-            perc = 1 - (sr.timestamp() - curTime.timestamp()) / nightLen
-
-        #print("dl {0}; perc {1}; cur {2}; sr {3}; ss {4}; day {5}".format(dayLen, perc, curTime.timestamp(), sr.timestamp(), ss.timestamp(), day))
+            perc = 1 - (sr.timestamp() - cur_time.timestamp()) / night_len
 
         dot = int(round(round(self.ledW * perc)))
         self.canvas.SetPixel(dot, 0, r, g, b)
         self.canvas.SetPixel(dot-1, 0, r, g, b)
         self.canvas.SetPixel(dot+1, 0, r, g, b)
 
-    def drawPrecip(self):
+    def draw_precip(self):
         prec_type = None
         prec_strength = None
         wind_speed = None
 
-        dev_prec_type = self.getHassEntity('prec_type')
+        dev_prec_type = self.get_hass_entity('prec_type')
         if dev_prec_type is not None:
             prec_type = int(dev_prec_type)
 
-        dev_prec_strength = self.getHassEntity('prec_strength')
+        dev_prec_strength = self.get_hass_entity('prec_strength')
         if dev_prec_strength is not None:
             prec_strength = float(dev_prec_strength)
 
-        dev_wind_speed = self.getHassEntity('wind_speed')
+        dev_wind_speed = self.get_hass_entity('wind_speed')
         if dev_wind_speed is not None:
             wind_speed = int(round(dev_wind_speed, 0))
 
@@ -333,7 +331,7 @@ class RunText:
             return
 
         max_drops = int(self.ledH * prec_strength)
-        minX = 0
+        min_x = 0
         speed_rain = 100 # pixels per second
         speed_snow = 15
         speed_wet_snow = 25
@@ -346,11 +344,11 @@ class RunText:
 
         horizontal_speed = int(wind_speed/2)
         if horizontal_speed > 0:
-            minX = - self.ledH
+            min_x = - self.ledH
 
         now_micro = time.time_ns() // 1000000
         if (len(self.raindrops) < max_drops) and (now_micro - self.snow_timer > interval * 1000):
-            startY = 0
+            start_y = 0
             if prec_type == 1:
                 drop_type = 'rain'
                 speed = speed_rain
@@ -364,10 +362,13 @@ class RunText:
             elif prec_type == 3:
                 drop_type = 'snow'
                 speed = speed_snow
+            else:
+                # impossible
+                return
             delay = 1 / speed
             # print("{0}: {1}".format(drop_type, str(delay)))
             # interval = self.ledH / (max_drops * speed)
-            self.raindrops.append({'x': random.randint(minX, self.ledW - 1), 'y': startY, 'timer': time.time_ns() // 1000000, 'color': self.getColorByPrec(drop_type), 'type': drop_type, 'delay': delay})
+            self.raindrops.append({'x': random.randint(min_x, self.ledW - 1), 'y': start_y, 'timer': time.time_ns() // 1000000, 'color': self.get_color_by_prec(drop_type), 'type': drop_type, 'delay': delay})
             self.snow_timer = now_micro
 
         for i, f in enumerate(self.raindrops):
@@ -381,7 +382,7 @@ class RunText:
             # print('real speed: ' + str(realSpeed))
             self.raindrops[i]['timer'] = now_micro
 
-            self.raindrops[i]['color'] = self.getColorByPrec(self.raindrops[i]['type'])
+            self.raindrops[i]['color'] = self.get_color_by_prec(self.raindrops[i]['type'])
             if self.raindrops[i]['type'] == 'rain':
                 self.raindrops[i]['y'] += distance
                 self.raindrops[i]['x'] += 0 if horizontal_speed == 0 or self.raindrops[i]['y'] % horizontal_speed == 0 else 1
@@ -395,7 +396,7 @@ class RunText:
             if self.raindrops[i]['y'] > self.ledH - 1:
                 self.raindrops.pop(i)
 
-    def getCoords(self, id, w, h):
+    def get_coords(self, id, w, h):
         color = self.elements[id]["border_color"]
         align_x = self.elements[id]["align_x"]
         row = self.elements[id]["row"]
@@ -424,7 +425,7 @@ class RunText:
         coords = {'id': id, 'x': x, 'y': y, 'w': w, 'h': h, 'a': align_x}
         self.map[id] = coords
 
-        if not self.debugBorders:
+        if not self.debug_borders:
             return coords
 
         c = graphics.Color(color[0], color[1], color[2])
@@ -435,7 +436,7 @@ class RunText:
 
         return coords
 
-    def getColorByPrec(self, prec_type):
+    def get_color_by_prec(self, prec_type):
         if prec_type == 'rain':
             return [0, random.randint(100, 150), random.randint(200, 255)]
         elif prec_type == 'wet_snow':
@@ -444,7 +445,7 @@ class RunText:
             c = random.randint(50, 255)
             return [c, c, c]
 
-    def getColor(self, id, type=None):
+    def get_color(self, id, type=None):
         key = "{0}:{1}".format(self.bri, id)
         if type is not None:
             key = key + ":" + type
@@ -467,13 +468,13 @@ class RunText:
             return 255
         return col*self.bri
 
-    def calcWidth(self, text, font):
+    def calc_width(self, text, font):
         w = 0
         for char in text:
             w += font.CharacterWidth(ord(char))
         return w
 
-    def formatDayTime(self, time_str):
+    def format_day_time(self, time_str):
         dt = datetime.datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f')
         # dt = datetime.date.fromisoformat(time_str)
         if dt.hour >= 18:
@@ -486,7 +487,7 @@ class RunText:
             return 'n'
         return 'u'
 
-    def defineBrightness(self, now):
+    def define_brightness(self, now):
         self.bri = 1
         if self.userBrightness:
             if self.userBrightness == 1:
@@ -496,7 +497,7 @@ class RunText:
                 self.matrix.brightness = self.userBrightness
             return
 
-        dev_sun = self.getHassEntity('sun_current')
+        dev_sun = self.get_hass_entity('sun_current')
         if 0 <= now.hour < 6:
             if dev_sun == 'below_horizon':
                 self.matrix.brightness = 1
@@ -515,14 +516,14 @@ class RunText:
         else:
             self.matrix.brightness = 60
 
-    def getHassEntity(self, configKey):
-        if configKey not in self.config['devices']:
+    def get_hass_entity(self, config_key):
+        if config_key not in self.config['devices']:
             return None
-        device = self.config['devices'][configKey]
-        entityKey = device['id']
-        if entityKey not in self.hass:
+        device = self.config['devices'][config_key]
+        entity_key = device['id']
+        if entity_key not in self.hass:
             return None
-        entity = self.hass[entityKey]
+        entity = self.hass[entity_key]
         if entity['state'] == 'unknown' or entity['state'] == 'unavailable':
             return None
         if 'attr' in device:
@@ -542,7 +543,7 @@ class RunText:
 
         return entity['state']
 
-    def readHass(self):
+    def read_hass(self):
         now = time.time()
         if self.hassUpdated + self.config['metrics_period'] > now:
             return self.hass
@@ -550,7 +551,7 @@ class RunText:
             resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])})
         except Exception as e:
             print("Cannot load hass: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.getColor('clock'), u'HASS ERROR')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.get_color('clock'), u'HASS ERROR')
             return None
 
         if not resp:
@@ -562,16 +563,16 @@ class RunText:
             print("Invalid hass states `{0}`: {1}".format(str(e), resp.text))
             return None
 
-        hassAssoc = {}
+        hass_assoc = {}
         for entity in hass:
-            hassAssoc[entity['entity_id']] = entity
+            hass_assoc[entity['entity_id']] = entity
 
         self.hassUpdated = now
-        self.hass = hassAssoc
+        self.hass = hass_assoc
 
-        return hassAssoc
+        return hass_assoc
 
-    def mqttLoop(self):
+    def mqtt_loop(self):
         if not self.config['mqtt']['enabled']:
             return
         if self.mqcl is not None:
@@ -597,7 +598,7 @@ class RunText:
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
         except Exception as e:
             print("Cannot connect to mqtt: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontReg, 1, 26, self.getColor('clock'), u'MQTT ERROR')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 26, self.get_color('clock'), u'MQTT ERROR')
             self.mqcl = None
 
     def mqtt_connect(self, client, userdata, flags, rc):
@@ -692,17 +693,6 @@ class RunText:
         print('publish text state `{0}`'.format(payload))
         self.mqcl.publish("{0}/text_state".format(self.mqtt_root_topic), payload=payload)
 
-    def getSign(self, num):
-        if num is None:
-            return ''
-        elif num > 0:
-            return ''
-        elif num == 0:
-            return ''
-        elif num < 0:
-            return '-'
-        else:
-            return '?'
 
 if __name__ == "__main__":
     run_text = RunText()
