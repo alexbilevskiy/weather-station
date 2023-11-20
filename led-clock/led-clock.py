@@ -548,7 +548,7 @@ class RunText:
         if self.hassUpdated + self.config['metrics_period'] > now:
             return self.hass
         try:
-            resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])})
+            resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])}, timeout=10)
         except Exception as e:
             print("Cannot load hass: {0}".format(str(e)))
             graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.get_color('clock'), u'HASS ERROR')
@@ -593,7 +593,7 @@ class RunText:
         self.mqcl.on_connect = self.mqtt_connect
         self.mqcl.on_disconnect = self.mqtt_disconnect
         self.mqcl.on_message = self.mqtt_message
-        self.mqcl.will_set("{0}/availability".format(self.mqtt_root_topic), payload=b"offline", retain=False)
+        self.mqcl.will_set("{0}/availability".format(self.mqtt_root_topic), payload=b"offline", retain=True)
         try:
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
         except Exception as e:
@@ -655,7 +655,7 @@ class RunText:
         print('publish discovery light ' + payload)
         self.mqcl.publish(discovery_topic, payload=payload, retain=True)
         self.report_brightness_state()
-        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=False)
+        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
 
     def mqtt_discovery_text(self):
         discovery_topic = "{0}/text/{1}-text/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
@@ -677,7 +677,7 @@ class RunText:
         print('publish discovery text ' + payload)
         self.mqcl.publish(discovery_topic, payload=payload, retain=True)
         self.report_text_state()
-        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=False)
+        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
 
     def report_brightness_state(self):
         if self.userBrightness:
