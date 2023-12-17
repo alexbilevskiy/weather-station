@@ -1,5 +1,5 @@
 {
-  "metrics_period": 60,
+  "metrics_period": 30,
   "mqtt": {
     "enabled": true,
     "host": "localhost",
@@ -12,17 +12,18 @@
       "row": 0,
       "rowspan": 2,
       "align_x": "left",
+      "align_y": "top",
       "color": [255, 255, 255],
       "border_color": [255, 0, 0]
     },
     "co2": {
-      "row": 3,
+      "row": 4,
       "color": [80, 80, 80],
       "border_color": [255, 0, 255],
       "align_x": "left"
     },
     "hum": {
-      "row": 2,
+      "row": 3,
       "color": [80, 80, 80],
       "border_color": [255, 100, 100],
       "align_x": "left"
@@ -43,7 +44,7 @@
       "row": 1,
       "color": [20, 110, 110],
       "provided_color": [10, 60, 60],
-      "border_color": [90, 100, 160],
+      "border_color": [50, 60, 110],
       "align_x": "right"
     },
     "weather1": {
@@ -83,7 +84,7 @@
   },
   "devices": {
     "temp_outside": {
-      "id" : "sensor.0x00158d0005866d7e_temperature"
+      "id" : "sensor.aqara_weather_01_temperature"
     },
     "temp_outside_provided": {
       "id": "weather.yandex_weather",
@@ -108,13 +109,13 @@
       ]
     },
     "temp_inside": {
-      "id" : "sensor.0x00158d0001713dab_temperature"
+      "id" : "sensor.aqara_weather_02_temperature"
     },
     "humidity_inside": {
-      "id" : "sensor.0x00158d0001713dab_humidity"
+      "id" : "sensor.aqara_weather_02_humidity"
     },
     "co2_level": {
-      "id" : "sensor.co2_cm11"
+      "id" : "sensor.d1_co2_co_cm11"
     },
     "sun_period": {
       "id": "sun.sun",
