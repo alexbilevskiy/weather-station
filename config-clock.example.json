@@ -9,6 +9,7 @@
   },
   "elements": {
     "clock": {
+      "type": "clock",
       "row": 0,
       "rowspan": 2,
       "align_x": "left",
@@ -17,121 +18,134 @@
       "border_color": [255, 0, 0]
     },
     "co2": {
+      "type": "co2",
+      "sensors": {
+        "main": {
+          "id" : "sensor.d1_co2_co_s8"
+        }
+      },
       "row": 4,
       "color": [80, 80, 80],
       "border_color": [255, 0, 255],
       "align_x": "left"
     },
     "hum": {
+      "type": "humidity",
+      "sensors": {
+        "main": {
+          "id" : "sensor.aqara_weather_02_humidity"
+        }
+      },
       "row": 3,
       "color": [80, 80, 80],
       "border_color": [255, 100, 100],
       "align_x": "left"
     },
     "temp_inside": {
+      "type": "temperature_inside",
+      "sensors": {
+        "main": {
+          "id": "sensor.aqara_weather_02_temperature"
+        }
+      },
       "row": 0,
       "color": [2, 100, 12],
       "dot_color": [110, 0, 0],
       "border_color": [160, 100, 90],
       "align_x": "right"
     },
-    "outside_icon": {
-      "row": 1,
-      "border_color": [255, 100, 255],
-      "align_x": "right"
-    },
     "temp_outside": {
+      "type": "temperature_outside",
+      "sensors": {
+        "measured": {
+          "id": "sensor.aqara_weather_01_temperature"
+        },
+        "provided": {
+          "id": "weather.yandex_weather",
+          "attr": "temperature"
+        },
+        "icon": {
+          "id": "sensor.current_icon"
+        }
+      },
       "row": 1,
       "color": [20, 110, 110],
       "provided_color": [10, 60, 60],
       "border_color": [50, 60, 110],
       "align_x": "right"
     },
-    "weather1": {
+    "forecast": {
+      "type": "forecast",
+      "sensors": {
+        "forecast": {
+          "id": "weather.yandex_weather",
+          "attrs": [
+            "forecast",
+            "forecast_icons"
+          ]
+        }
+      },
       "row": 2,
       "color": [60, 20, 60],
       "border_color": [100, 100, 255],
       "align_x": "right"
     },
-    "weather1_icon": {
-      "row": 2,
-      "border_color": [255, 100, 255],
-      "align_x": "right"
-    },
-    "weather2": {
-      "row": 3,
-      "border_color": [100, 100, 255],
-      "align_x": "right"
-    },
-    "weather2_icon": {
-      "row": 3,
-      "border_color": [255, 100, 255],
-      "align_x": "right"
-    },
     "wind": {
+      "type": "wind",
       "row": 4,
+      "sensors": {
+        "speed": {
+          "id": "weather.yandex_weather",
+          "attr": "wind_speed"
+        },
+        "bearing": {
+          "id": "weather.yandex_weather",
+          "attr": "wind_bearing"
+        }
+      },
       "color": [20, 60, 110],
       "border_color": [100, 255, 150],
       "align_x": "right"
     },
-    "custom_text": {
+    "mqtt_text": {
+      "type": "mqtt_text",
       "row": 5,
       "color": [80, 80, 80],
       "border_color": [100, 255, 150],
       "align_x": "left",
       "align_y": "bottom"
+    },
+    "sky": {
+      "type": "sky",
+      "sensors": {
+        "sun_period": {
+          "id": "sun.sun",
+          "attrs": [
+            "next_rising",
+            "next_setting"
+          ]
+        }
+      }
+    },
+    "prec": {
+      "type": "precipitations",
+      "sensors": {
+        "precipitation_type": {
+          "id": "sensor.precipitation_type"
+        },
+        "precipitation_strength": {
+          "id": "sensor.precipitation_strength_fact"
+        },
+        "wind_speed": {
+          "id": "weather.yandex_weather",
+          "attr": "wind_speed"
+        }
+      }
     }
   },
   "devices": {
-    "temp_outside": {
-      "id" : "sensor.aqara_weather_01_temperature"
-    },
-    "temp_outside_provided": {
-      "id": "weather.yandex_weather",
-      "attr": "temperature"
-    },
-    "current_weather_icon": {
-      "id": "sensor.current_icon"
-    },
-    "wind_speed": {
-      "id": "weather.yandex_weather",
-      "attr": "wind_speed"
-    },
-    "wind_bearing": {
-      "id": "weather.yandex_weather",
-      "attr": "wind_bearing"
-    },
-    "forecast": {
-      "id": "weather.yandex_weather",
-      "attrs": [
-        "forecast",
-        "forecast_icons"
-      ]
-    },
-    "temp_inside": {
-      "id" : "sensor.aqara_weather_02_temperature"
-    },
-    "humidity_inside": {
-      "id" : "sensor.aqara_weather_02_humidity"
-    },
-    "co2_level": {
-      "id" : "sensor.d1_co2_co_cm11"
-    },
-    "sun_period": {
-      "id": "sun.sun",
-      "attrs": [
-        "next_rising",
-        "next_setting"
-      ]
-    },
     "sun_current": {
       "id": "sun.sun"
-    },
-    "prec_type": {
-      "id": "sensor.precipitation_type"
-    },
-    "prec_strength": {
-      "id": "sensor.precipitation_strength_fact"
     }
   },
   "hass": {

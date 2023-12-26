@@ -48,7 +48,7 @@ class RunText:
 
         self.userBrightness = None
         self.custom_text = u""
-        self.bri = 1
+        self.extra_dim = False
         self.raindrops = []
         self.snow_timer = time.time_ns() // 1000000
 
@@ -92,35 +92,52 @@ class RunText:
 
     def clock(self):
         now = datetime.datetime.now()
-        self.draw_time(now)
+        self.draw_time('clock', now)
 
         self.mqtt_loop()
 
         hass = self.read_hass()
         if not hass:
             graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.get_color('clock'), u'NO HASS')
-        else:
-            self.define_brightness(now)
-            self.draw_custom_text()
-            self.draw_temp(now)
-            self.draw_humidity()
-            self.draw_forecast()
-            self.draw_wind()
-            self.draw_co2()
-            self.draw_sky()
-            self.draw_precip()
+            return
+        self.define_brightness(now)
+        self.draw_entities(now)
 
-    def draw_time(self, now):
+    def draw_entities(self, now):
+        for id, entity in self.elements.items():
+            if 'type' not in entity:
+                continue
+            if entity['type'] == 'temperature_inside' and not self.extra_dim:
+                self.draw_temp_inside(id)
+            elif entity['type'] == 'temperature_outside' and not self.extra_dim:
+                self.draw_temp_outside(id, now)
+            elif entity['type'] == 'co2' and not self.extra_dim:
+                self.draw_co2(id)
+            elif entity['type'] == 'humidity' and not self.extra_dim:
+                self.draw_humidity(id)
+            elif entity['type'] == 'wind' and not self.extra_dim:
+                self.draw_wind(id)
+            elif entity['type'] == 'sky':
+                self.draw_sky(id)
+            elif entity['type'] == 'precipitations':
+                self.draw_precip(id)
+            elif entity['type'] == 'mqtt_text' and not self.extra_dim:
+                self.draw_mqtt_text(id)
+            elif entity['type'] == 'forecast' and not self.extra_dim:
+                self.draw_forecast(id)
+
+
+    def draw_time(self, id, now):
         text = now.strftime("%H:%M")
         width = self.calc_width(text, self.fontClock)
-        coords = self.get_coords('clock', w=width, h=self.fontClockH)
-        color = self.get_color('clock')
+        coords = self.get_coords_by_element(id, w=width, h=self.fontClockH, element=self.elements[id])
+        color = self.get_color(id)
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
 
-    def draw_custom_text(self):
+    def draw_mqtt_text(self, id):
         if self.custom_text == '':
             return
-        color = self.get_color('custom_text')
+        color = self.get_color(id)
         width = self.calc_width(self.custom_text, self.fontSm)
         cut_at = len(self.custom_text) - 1
         was_cut = False
@@ -139,36 +156,36 @@ class RunText:
                     width = self.calc_width(self.custom_text[:cut_at], self.fontSm)
 
         if was_cut:
-            coords = self.get_coords('custom_text', w=width, h=self.fontSmH)
+            coords = self.get_coords_by_element(id, w=width, h=self.fontSmH, element=self.elements[id])
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3 - self.fontSmH + 2, color, self.custom_text[:cut_at])
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'] + 3, color, self.custom_text[cut_at:])
         else:
-            coords = self.get_coords('custom_text', w=width, h=self.fontSmH)
+            coords = self.get_coords_by_element(id, w=width, h=self.fontSmH, element=self.elements[id])
             graphics.DrawText(self.canvas, self.fontSm, coords['x'], coords['y'], color, self.custom_text)
 
-    def draw_co2(self):
-        dev_co2 = self.get_hass_entity('co2_level')
+    def draw_co2(self, id):
+        dev_co2 = self.get_hass_entity_by_device(self.elements[id]['sensors']['main'])
         if dev_co2 is not None:
             text = u'{0}ppm'.format(int(float(dev_co2)))
         else:
             text = 'N/A'
         width = self.calc_width(text, self.fontReg)
-        coords = self.get_coords('co2', w=width, h=self.fontRegH)
-        color = self.get_color('co2')
+        coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
+        color = self.get_color(id)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
-    def draw_humidity(self):
-        dev_hum = self.get_hass_entity('humidity_inside')
+    def draw_humidity(self, id):
+        dev_hum = self.get_hass_entity_by_device(self.elements[id]['sensors']['main'])
         if dev_hum is not None:
             text = u'{0}%'.format(int(round(float(dev_hum), 0)))
         else:
             text = 'N/A'
         width = self.calc_width(text, self.fontReg)
-        coords = self.get_coords('hum', h=self.fontRegH, w=width)
-        color = self.get_color('hum')
+        coords = self.get_coords_by_element(id, h=self.fontRegH, w=width, element=self.elements[id])
+        color = self.get_color(id)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
-    def draw_wind(self):
+    def draw_wind(self, id):
         WIND_DIRECTION_MAPPING = {
             315: "nw",
             360: "n",
@@ -180,73 +197,82 @@ class RunText:
             270: "w",
             0: "c",
         }
-        dev_wind_speed = self.get_hass_entity('wind_speed')
-        dev_wind_bearing = self.get_hass_entity('wind_bearing')
+        dev_wind_speed = self.get_hass_entity_by_device(self.elements[id]['sensors']['speed'])
+        dev_wind_bearing = self.get_hass_entity_by_device(self.elements[id]['sensors']['bearing'])
         text = 'N/A'
         if dev_wind_bearing is not None and dev_wind_speed is not None:
             text = u'{1} {0}m/s'.format(int(round(float(dev_wind_speed), 0)), WIND_DIRECTION_MAPPING[dev_wind_bearing])
 
         width = self.calc_width(text, self.fontReg)
-        coords = self.get_coords('wind', w=width, h=self.fontRegH)
-        color = self.get_color('wind')
+        coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
+        color = self.get_color(id)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
-    def draw_temp(self, now):
-        dev_temp_inside = self.get_hass_entity('temp_inside')
+    def draw_temp_inside(self, id):
+        dev_temp_inside = self.get_hass_entity_by_device(self.elements[id]['sensors']['main'])
         text = 'N/A'
         if dev_temp_inside is not None:
             text = u'{0}°'.format(round(float(dev_temp_inside), 1))
 
         width = self.calc_width(text, self.fontReg)
-        coords = self.get_coords('temp_inside', w=width, h=self.fontRegH)
-        color = self.get_color('temp_inside')
-        color_dot = self.get_color('temp_inside', 'dot')
+        coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
+        color = self.get_color(id)
+        color_dot = self.get_color(id, 'dot')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color_dot, '    . ')
 
+    def draw_temp_outside(self, id, now):
         if now.second % 10 >= 5:
-            col = self.get_color('temp_outside')
-            dev_temp_outside = self.get_hass_entity('temp_outside')
+            col = self.get_color(id)
+            dev_temp_outside = self.get_hass_entity_by_device(self.elements[id]['sensors']['measured'])
         else:
-            col = self.get_color('temp_outside', 'provided')
-            dev_temp_outside = self.get_hass_entity('temp_outside_provided')
+            col = self.get_color(id, 'provided')
+            dev_temp_outside = self.get_hass_entity_by_device(self.elements[id]['sensors']['provided'])
 
         text = 'N/A'
         if dev_temp_outside is not None:
             text = u'{0}°'.format(int(round(float(dev_temp_outside), 0)))
 
         width = self.calc_width(text, self.fontReg)
-        coords = self.get_coords('temp_outside', w=width, h=self.fontRegH)
+        coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], col, text)
 
-        dev_current_icon = self.get_hass_entity('current_weather_icon')
+        dev_current_icon = self.get_hass_entity_by_device(self.elements[id]['sensors']['icon'])
         if dev_current_icon is None:
             return
-        coords = self.get_coords('outside_icon', w=self.imgSize, h=self.imgSize)
+        coords = self.get_coords_by_element("{0}_icon".format(id), w=self.imgSize, h=self.imgSize, element=self.elements[id])
         self.draw_image(self.get_icon(dev_current_icon), coords['x'], coords['y'])
 
-    def draw_forecast(self):
-        c = self.get_color('weather1')
-        dev_forecast = self.get_hass_entity('forecast')
+    def draw_forecast(self, id):
+        c = self.get_color(id)
+        dev_forecast = self.get_hass_entity_by_device(self.elements[id]['sensors']['forecast'])
         if dev_forecast is None:
+            print('no fore')
             return
 
         if len(dev_forecast['forecast']) < 2:
+            print('invalid fore')
             return
 
+        weather_element = self.elements[id]
+
         fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['temperature'])))
-        coords = self.get_coords('weather1', w=self.calc_width(fc1, self.fontReg), h=self.fontRegH)
+        coords = self.get_coords_by_element("{0}_row_1".format(id), w=self.calc_width(fc1, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc1)
 
-        coords = self.get_coords('weather1_icon', w=self.imgSize, h=self.imgSize)
+        coords = self.get_coords_by_element("{0}_row_1_icon".format(id), w=self.imgSize, h=self.imgSize, element=weather_element)
         self.draw_image(self.get_icon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
 
+        weather_element['row'] += 1
         fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['temperature'])))
-        coords = self.get_coords('weather2', w=self.calc_width(fc2, self.fontReg), h=self.fontRegH)
+        coords = self.get_coords_by_element("{0}_row_2".format(id), w=self.calc_width(fc2, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc2)
 
-        coords = self.get_coords('weather2_icon', w=self.imgSize, h=self.imgSize)
+        coords = self.get_coords_by_element("{0}_row_2_icon".format(id), w=self.imgSize, h=self.imgSize, element=weather_element)
         self.draw_image(self.get_icon(dev_forecast['forecast_icons'][1]), coords['x'], coords['y'])
+
+        # TODO: hack because weather_element is passed by reference (why?)
+        weather_element['row'] -= 1
 
     def get_icon(self, icon_name):
         #https://yastatic.net/weather/i/icons/islands/32/
@@ -272,10 +298,10 @@ class RunText:
                 (r, g, b) = pixels[x, y]
                 if r == g == b == 0:
                     continue
-                self.canvas.SetPixel(x + pos_x, y + pos_y, self.c(r * 0.7), self.c(g * 0.7), self.c(b * 0.7))
+                self.canvas.SetPixel(x + pos_x, y + pos_y, self.c(r, 0.7), self.c(g, 0.7), self.c(b, 0.7))
 
-    def draw_sky(self):
-        dev_sun = self.get_hass_entity('sun_period')
+    def draw_sky(self, id):
+        dev_sun = self.get_hass_entity_by_device(self.elements[id]['sensors']['sun_period'])
         if dev_sun is None:
             return
 
@@ -310,20 +336,20 @@ class RunText:
         self.canvas.SetPixel(dot-1, 0, r, g, b)
         self.canvas.SetPixel(dot+1, 0, r, g, b)
 
-    def draw_precip(self):
+    def draw_precip(self, id):
         prec_type = None
         prec_strength = None
         wind_speed = None
 
-        dev_prec_type = self.get_hass_entity('prec_type')
+        dev_prec_type = self.get_hass_entity_by_device(self.elements[id]['sensors']['precipitation_type'])
         if dev_prec_type is not None:
             prec_type = int(dev_prec_type)
 
-        dev_prec_strength = self.get_hass_entity('prec_strength')
+        dev_prec_strength = self.get_hass_entity_by_device(self.elements[id]['sensors']['precipitation_strength'])
         if dev_prec_strength is not None:
             prec_strength = float(dev_prec_strength)
 
-        dev_wind_speed = self.get_hass_entity('wind_speed')
+        dev_wind_speed = self.get_hass_entity_by_device(self.elements[id]['sensors']['wind_speed'])
         if dev_wind_speed is not None:
             wind_speed = int(round(dev_wind_speed, 0))
 
@@ -397,12 +423,14 @@ class RunText:
                 self.raindrops.pop(i)
 
     def get_coords(self, id, w, h):
-        color = self.elements[id]["border_color"]
-        align_x = self.elements[id]["align_x"]
-        row = self.elements[id]["row"]
-        rowspan = self.elements[id]["rowspan"] if "rowspan" in self.elements[id] else 1
-        align_y = self.elements[id]["align_y"] if "align_y" in self.elements[id] else "bottom"
+        return self.get_coords_by_element(id, w, h, self.elements[id])
 
+    def get_coords_by_element(self, id, w,  h, element):
+        color = element["border_color"]
+        align_x = element["align_x"]
+        row = element["row"]
+        rowspan = element["rowspan"] if "rowspan" in element else 1
+        align_y = element["align_y"] if "align_y" in element else "bottom"
         if align_x == 'left':
             x = 1
         else:
@@ -446,7 +474,7 @@ class RunText:
             return [c, c, c]
 
     def get_color(self, id, type=None):
-        key = "{0}:{1}".format(self.bri, id)
+        key = id
         if type is not None:
             key = key + ":" + type
         if key in self.colors:
@@ -463,10 +491,10 @@ class RunText:
 
         return color
 
-    def c(self, col):
-        if col*self.bri>255:
+    def c(self, col, coeff=1):
+        if col*coeff>255:
             return 255
-        return col*self.bri
+        return col*coeff
 
     def calc_width(self, text, font):
         w = 0
@@ -488,11 +516,11 @@ class RunText:
         return 'u'
 
     def define_brightness(self, now):
-        self.bri = 1
+        self.extra_dim = False
         if self.userBrightness:
             if self.userBrightness == 1:
                 self.matrix.brightness = 1
-                self.bri = 0.5
+                self.extra_dim = True
             else:
                 self.matrix.brightness = self.userBrightness
             return
@@ -501,7 +529,7 @@ class RunText:
         if 0 <= now.hour < 6:
             if dev_sun == 'below_horizon':
                 self.matrix.brightness = 1
-                self.bri = 0.5
+                self.extra_dim = True
             else:
                 self.matrix.brightness = 20
         elif 6 <= now.hour < 9:
@@ -520,6 +548,9 @@ class RunText:
         if config_key not in self.config['devices']:
             return None
         device = self.config['devices'][config_key]
+        return self.get_hass_entity_by_device(device)
+
+    def get_hass_entity_by_device(self, device):
         entity_key = device['id']
         if entity_key not in self.hass:
             return None
