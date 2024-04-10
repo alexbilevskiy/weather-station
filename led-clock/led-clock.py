@@ -256,7 +256,7 @@ class RunText:
 
         weather_element = self.elements[id]
 
-        fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['temperature'])))
+        fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['native_temperature'])))
         coords = self.get_coords_by_element("{0}_row_1".format(id), w=self.calc_width(fc1, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc1)
 
@@ -264,7 +264,7 @@ class RunText:
         self.draw_image(self.get_icon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
 
         weather_element['row'] += 1
-        fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['temperature'])))
+        fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['native_temperature'])))
         coords = self.get_coords_by_element("{0}_row_2".format(id), w=self.calc_width(fc2, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc2)
 
