@@ -259,8 +259,9 @@ class RunText:
             icon1 = 'na'
             icon2 = 'na'
         else:
-            fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['native_temperature'])))
-            fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['native_temperature'])))
+            # access forecast objects starting from index 1, because first object (with index 0) is probably the current weather
+            fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['native_temperature'])))
+            fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][2]['datetime']), int(round(dev_forecast['forecast'][2]['native_temperature'])))
             icon1 = dev_forecast['forecast_icons'][0]
             icon2 = dev_forecast['forecast_icons'][1]
 
@@ -509,7 +510,13 @@ class RunText:
         return w
 
     def format_day_time(self, time_str):
-        dt = datetime.datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f')
+        #2024-04-10T08:58:40+03:00
+
+        # %:z is not supported on versions lower than 3.12, so remove colon
+        r_idx = time_str.rfind(':')
+        time_str = time_str[:r_idx] + time_str[r_idx+1:]
+
+        dt = datetime.datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f%z')
         # dt = datetime.date.fromisoformat(time_str)
         if dt.hour >= 18:
             return 'e'
