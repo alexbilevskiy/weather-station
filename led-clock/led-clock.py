@@ -246,30 +246,33 @@ class RunText:
     def draw_forecast(self, id):
         c = self.get_color(id)
         dev_forecast = self.get_hass_entity_by_device(self.elements[id]['sensors']['forecast'])
-        if dev_forecast is None:
-            print('no fore')
-            return
 
-        if len(dev_forecast['forecast']) < 2:
-            print('invalid fore')
-            return
 
         weather_element = self.elements[id]
 
-        fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['native_temperature'])))
+        if dev_forecast is None or len(dev_forecast['forecast']) < 2:
+            fc1 = 'N/A'
+            fc2 = 'N/A'
+            icon1 = 'na'
+            icon2 = 'na'
+        else:
+            fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][0]['datetime']), int(round(dev_forecast['forecast'][0]['native_temperature'])))
+            fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['native_temperature'])))
+            icon1 = dev_forecast['forecast_icons'][0]
+            icon2 = dev_forecast['forecast_icons'][1]
+
         coords = self.get_coords_by_element("{0}_row_1".format(id), w=self.calc_width(fc1, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc1)
 
         coords = self.get_coords_by_element("{0}_row_1_icon".format(id), w=self.imgSize, h=self.imgSize, element=weather_element)
-        self.draw_image(self.get_icon(dev_forecast['forecast_icons'][0]), coords['x'], coords['y'])
+        self.draw_image(self.get_icon(icon1), coords['x'], coords['y'])
 
         weather_element['row'] += 1
-        fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['native_temperature'])))
         coords = self.get_coords_by_element("{0}_row_2".format(id), w=self.calc_width(fc2, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc2)
 
         coords = self.get_coords_by_element("{0}_row_2_icon".format(id), w=self.imgSize, h=self.imgSize, element=weather_element)
-        self.draw_image(self.get_icon(dev_forecast['forecast_icons'][1]), coords['x'], coords['y'])
+        self.draw_image(self.get_icon(icon2), coords['x'], coords['y'])
 
         # TODO: hack because weather_element is passed by reference (why?)
         weather_element['row'] -= 1
