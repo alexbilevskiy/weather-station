@@ -24,6 +24,7 @@ class RunText:
         self.mqcl = None
         self.mqtt_root_topic = None
         self.mqtt_device = None
+        self.mqtt_error = False
 
         self.icons = {}
         self.ledW = 128
@@ -95,6 +96,8 @@ class RunText:
         self.draw_time('clock', now)
 
         self.mqtt_loop()
+        if self.mqtt_error:
+            graphics.DrawText(self.canvas, self.fontReg, 1, 26, self.get_color('clock'), u'MQTT ERROR')
 
         hass = self.read_hass()
         if not hass:
@@ -585,7 +588,7 @@ class RunText:
             resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])}, timeout=10)
         except Exception as e:
             print("Cannot load hass: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.get_color('clock'), u'HASS ERROR')
+
             return None
 
         if not resp:
@@ -630,9 +633,10 @@ class RunText:
         self.mqcl.will_set("{0}/availability".format(self.mqtt_root_topic), payload=b"offline", retain=True)
         try:
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
+            self.mqtt_error = False
         except Exception as e:
             print("Cannot connect to mqtt: {0}".format(str(e)))
-            graphics.DrawText(self.canvas, self.fontReg, 1, 26, self.get_color('clock'), u'MQTT ERROR')
+            self.mqtt_error = True
             self.mqcl = None
 
     def mqtt_connect(self, client, userdata, flags, rc):
