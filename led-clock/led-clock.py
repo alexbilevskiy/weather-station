@@ -286,11 +286,11 @@ class RunText:
         if icon_name in self.icons:
             return self.icons[icon_name]
         img_size = 8
-        i8 = '/opt/src/weather-station/icons8/{0}_{1}.png'.format(icon_name, img_size)
+        i8 = '../icons8/{0}_{1}.png'.format(icon_name, img_size)
         if os.path.isfile(i8):
             i = Image.open(i8).resize((self.imgSize, self.imgSize), Image.HAMMING)
         else:
-            i = Image.open('/opt/src/weather-station/icons/' + icon_name + '.png').resize((self.imgSize, self.imgSize), Image.HAMMING)
+            i = Image.open('../icons/' + icon_name + '.png').resize((self.imgSize, self.imgSize), Image.HAMMING)
         m = Image.new('RGB', i.size, "BLACK")
         m.paste(i, (0, 0), i)
         self.icons[icon_name] = m
