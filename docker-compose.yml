@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  weather-station:
+    container_name: weather-station
+    image: bee:5001/weather-station:latest
+    restart: unless-stopped
+    privileged: true

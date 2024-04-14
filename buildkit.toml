@@ -1,0 +1,3 @@
+[registry."bee:5001"]
+http = true
+insecure = true
