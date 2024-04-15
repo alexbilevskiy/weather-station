@@ -9,8 +9,8 @@ https://github.com/alexbilevskiy/weather-station/assets/14160356/9c2a1ec7-3ff8-4
 * Station retrieves sensor states from home assistant via http api (`/api/states`) every n-th second (defined in `config-lock.json`)
 * List of home assistant entities required for the station to work is defined in `devices` section of config. For example, `temp_outside` contains the name of the sensor with outside temperature, `prec_type` contains numeric type of precipitation (0 - clear, 1 - rain, 2 - snow, 3 - snowy rain).
 * List of widgets is defined in `elements` section of config. This list describes display order, color and alignment of elements. Widget types are hardcoded by name and linked internally with sensors from `devices` section.
-* Home assistant auto-discovery feature is used to create brightness control and input for bottom text line.
-![image](https://github.com/alexbilevskiy/weather-station/assets/14160356/a1fb7238-00e6-4c8d-8462-8543d7ec13b6)
+* Home assistant auto-discovery is used to create controls and input for text.
+![image](https://github.com/alexbilevskiy/weather-station/assets/14160356/fc59bbf3-eabf-43b6-9616-6300dc598b64)
 
 **todo**
 * merge `devices` and `elements` sections of config, make widgets list fully configurable, create widget types
