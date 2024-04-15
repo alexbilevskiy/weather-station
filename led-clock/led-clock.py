@@ -11,7 +11,8 @@ import paho.mqtt.client as mqtt
 class RunText:
     def __init__(self):
         p = psutil.Process()
-        p.cpu_affinity([3])
+        p.nice(-20)
+        # p.cpu_affinity([3])
 
         with open('../config-clock.json') as f:
             s = f.read()
@@ -49,6 +50,8 @@ class RunText:
 
         self.userBrightness = None
         self.custom_text = u""
+        self.sumulate_precip = ""
+        self.sumulate_precip_strength = 0
         self.extra_dim = False
         self.raindrops = []
         self.snow_timer = time.time_ns() // 1000000
@@ -360,6 +363,16 @@ class RunText:
         if dev_wind_speed is not None:
             wind_speed = int(round(dev_wind_speed, 0))
 
+        if self.sumulate_precip != "":
+            if self.sumulate_precip == "rain":
+                prec_type = 1
+            elif self.sumulate_precip == "wet_snow":
+                prec_type = 2
+            elif self.sumulate_precip == "snow":
+                prec_type = 3
+
+            prec_strength = self.sumulate_precip_strength
+
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             return
 
@@ -650,6 +663,8 @@ class RunText:
         print("mqtt connected with result code "+str(rc))
         self.mqtt_discovery_brightness()
         self.mqtt_discovery_text()
+        self.mqtt_discovery_simulate_precip()
+        self.mqtt_discovery_simulate_precip_strength()
 
     def mqtt_disconnect(self, client, userdata, rc):
         print("mqtt disconnected!!!")
@@ -675,6 +690,14 @@ class RunText:
             print("MQTT TEXT SET " + str(msg.payload))
             self.custom_text = msg.payload.decode()
             self.report_text_state()
+        elif re.match('.+/precip_set$', msg.topic):
+            print("MQTT PRECIP SET " + str(msg.payload))
+            self.sumulate_precip = msg.payload.decode()
+            self.report_simulate_precip_state()
+        elif re.match('.+/precip_str_set$', msg.topic):
+            print("MQTT PRECIP STR SET " + str(msg.payload))
+            self.sumulate_precip_strength = float(msg.payload.decode())
+            self.report_simulate_precip_strength_state()
         else:
             print('UNKNOWN MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
 
@@ -724,6 +747,59 @@ class RunText:
         self.report_text_state()
         self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
 
+    def mqtt_discovery_simulate_precip(self):
+        discovery_topic = "{0}/select/{1}-simulate-precip/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        service_config = {
+            "name": "simulate precipitation",
+            "unique_id": "{0}-simulate-precip".format(self.mqtt_device['identifiers']),
+            "object_id": "{0}-simulate-precip".format(self.mqtt_device['identifiers']),
+            "command_topic": "{0}/precip_set".format(self.mqtt_root_topic),
+            "state_topic": "{0}/precip_state".format(self.mqtt_root_topic),
+            "availability": {
+                "topic": "{0}/availability".format(self.mqtt_root_topic)
+            },
+            "options": [
+                "",
+                "snow",
+                "rain",
+                "wet_snow",
+            ],
+            "schema": "json",
+            "icon": "mdi:sun-snowflake",
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print('publish discovery precip ' + payload)
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_simulate_precip_state()
+        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
+
+    def mqtt_discovery_simulate_precip_strength(self):
+        discovery_topic = "{0}/number/{1}-precip-strength/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        service_config = {
+            "name": "simulated precip strength",
+            "unique_id": "{0}-precip-strength".format(self.mqtt_device['identifiers']),
+            "object_id": "{0}-precip-strength".format(self.mqtt_device['identifiers']),
+            "command_topic": "{0}/precip_str_set".format(self.mqtt_root_topic),
+            "state_topic": "{0}/precip_str_state".format(self.mqtt_root_topic),
+            "availability": {
+                "topic": "{0}/availability".format(self.mqtt_root_topic)
+            },
+            "min": 0.0,
+            "max": 5.0,
+            "mode": "slider",
+            "schema": "json",
+            "icon": "mdi:wind-power",
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print('publish discovery precip strength ' + payload)
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_simulate_precip_strength_state()
+        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
+
     def report_brightness_state(self):
         if self.userBrightness:
             state = {"state": "ON", "brightness": self.userBrightness}
@@ -737,6 +813,16 @@ class RunText:
         payload = self.custom_text
         print('publish text state `{0}`'.format(payload))
         self.mqcl.publish("{0}/text_state".format(self.mqtt_root_topic), payload=payload)
+
+    def report_simulate_precip_state(self):
+        payload = self.sumulate_precip
+        print('publish precip state `{0}`'.format(payload))
+        self.mqcl.publish("{0}/precip_state".format(self.mqtt_root_topic), payload=payload)
+
+    def report_simulate_precip_strength_state(self):
+        payload = self.sumulate_precip_strength
+        print('publish precip strength state `{0}`'.format(payload))
+        self.mqcl.publish("{0}/precip_str_state".format(self.mqtt_root_topic), payload=payload)
 
 
 if __name__ == "__main__":
