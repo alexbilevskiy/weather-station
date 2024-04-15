@@ -17,4 +17,4 @@ RUN make install-python PYTHON=$(command -v python3)
 COPY . /weather-station
 WORKDIR /weather-station/led-clock
 
-CMD ["/usr/bin/python3", "-B", "-u", "led-clock.py", "--light-adjust=0"]
+CMD ["python", "-B", "-u", "led-clock.py", "--light-adjust=0"]
