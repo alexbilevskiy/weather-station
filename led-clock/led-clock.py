@@ -5,13 +5,13 @@ import re
 import requests
 from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 from PIL import Image
-import time, datetime, json, textwrap, random, os, psutil, collections
+import time, datetime, json, textwrap, random, os, collections
 import paho.mqtt.client as mqtt
 
 class RunText:
     def __init__(self):
-        p = psutil.Process()
-        p.nice(-20)
+        # p = psutil.Process()
+        # p.nice(-20)
         # p.cpu_affinity([3])
 
         with open('../config-clock.json') as f:
