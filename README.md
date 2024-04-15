@@ -14,7 +14,6 @@ https://github.com/alexbilevskiy/weather-station/assets/14160356/9c2a1ec7-3ff8-4
 
 **todo**
 * merge `devices` and `elements` sections of config, make widgets list fully configurable, create widget types
-* docker image
 
 <details>
   <summary>(previous version with 32x64 display)</summary>
