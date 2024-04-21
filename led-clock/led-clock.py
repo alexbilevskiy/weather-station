@@ -223,9 +223,10 @@ class RunText:
         width = self.calc_width(text, self.fontReg)
         coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
         color = self.get_color(id)
-        color_dot = self.get_color(id, 'dot')
+        # color_dot = self.get_color(id, 'dot')
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
-        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color_dot, '    . ')
+        # TODO: mismatched position with narrow digits, eg: 21.1
+        # graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color_dot, '    . ')
 
     def draw_temp_outside(self, id, now):
         if now.second % 10 >= 5:
