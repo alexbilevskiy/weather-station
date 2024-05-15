@@ -96,7 +96,7 @@ class RunText:
 
     def clock(self):
         now = datetime.datetime.now()
-        self.draw_time('clock', now)
+        self.draw_clock('clock', now)
 
         self.mqtt_loop()
         if self.mqtt_error:
@@ -131,14 +131,23 @@ class RunText:
                 self.draw_mqtt_text(id)
             elif entity['type'] == 'forecast' and not self.extra_dim:
                 self.draw_forecast(id)
+            elif entity['type'] == 'date' and not self.extra_dim:
+                self.draw_date(id, now)
 
 
-    def draw_time(self, id, now):
+    def draw_clock(self, id, now):
         text = now.strftime("%H:%M")
         width = self.calc_width(text, self.fontClock)
         coords = self.get_coords_by_element(id, w=width, h=self.fontClockH, element=self.elements[id])
         color = self.get_color(id)
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
+
+    def draw_date(self, id, now):
+        text = now.strftime("%a, %d %b")
+        width = self.calc_width(text, self.fontReg)
+        coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
+        color = self.get_color(id)
+        graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], color, text)
 
     def draw_mqtt_text(self, id):
         if self.custom_text == '':

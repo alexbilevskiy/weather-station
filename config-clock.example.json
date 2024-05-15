@@ -17,6 +17,13 @@
       "color": [255, 255, 255],
       "border_color": [255, 0, 0]
     },
+    "date": {
+      "type": "date",
+      "row": 2,
+      "align_x": "left",
+      "color": [80, 80, 80],
+      "border_color": [255, 0, 255]
+    },
     "co2": {
       "type": "co2",
       "sensors": {
