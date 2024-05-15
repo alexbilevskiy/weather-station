@@ -100,11 +100,11 @@ class RunText:
 
         self.mqtt_loop()
         if self.mqtt_error:
-            graphics.DrawText(self.canvas, self.fontReg, 1, 26, self.get_color('clock'), u'MQTT ERROR')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 28, self.get_color('clock'), u'MQTT ERROR')
 
         hass = self.read_hass()
         if not hass:
-            graphics.DrawText(self.canvas, self.fontReg, 1, 31, self.get_color('clock'), u'NO HASS')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 36, self.get_color('clock'), u'NO HASS')
             return
         self.define_brightness(now)
         self.draw_entities(now)
