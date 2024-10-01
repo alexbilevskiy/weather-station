@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   weather-station:
     container_name: weather-station
