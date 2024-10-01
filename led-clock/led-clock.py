@@ -143,7 +143,7 @@ class RunText:
         graphics.DrawText(self.canvas, self.fontClock, coords['x'], coords['y'], color, text)
 
     def draw_date(self, id, now):
-        text = now.strftime("%a, %d %b")
+        text = now.strftime("%a %d %b")
         width = self.calc_width(text, self.fontReg)
         coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
         color = self.get_color(id)
