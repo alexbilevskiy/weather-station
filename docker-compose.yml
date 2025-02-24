@@ -1,8 +1,9 @@
 services:
   weather-station:
     container_name: weather-station
-    image: ${REGISTRY}/weather-station:latest
+    image: dr.qlupr.net/weather-station:latest
     restart: unless-stopped
     privileged: true
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - /opt/src/weather-station/config-clock.json:/weather-station/config-clock.json
