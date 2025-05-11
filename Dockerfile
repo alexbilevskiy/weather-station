@@ -7,11 +7,12 @@ RUN apt-get install -y ca-certificates
 
 RUN pip install requests psutil paho-mqtt==1.5 pillow
 
+RUN apt-get install python3-dev cython3 --no-install-recommends -y
+
 WORKDIR /build
 RUN git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
 WORKDIR ./rpi-rgb-led-matrix
 
-RUN apt-get install python3-dev cython3 --no-install-recommends -y
 RUN make build-python PYTHON=$(which python3) CYTHON=$(which cython3) -j 8
 RUN make install-python PYTHON=$(command -v python3)
 
