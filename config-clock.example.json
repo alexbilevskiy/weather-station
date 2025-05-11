@@ -1,5 +1,6 @@
 {
   "metrics_period": 30,
+  "debug_borders": false,
   "mqtt": {
     "enabled": true,
     "host": "localhost",

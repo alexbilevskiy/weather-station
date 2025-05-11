@@ -32,7 +32,7 @@ class RunText:
         self.ledH = 64
         self.delay = 0.05
 
-        self.debug_borders = False
+        self.debug_borders = self.config["debug_borders"]
 
         self.fontClock = graphics.Font()
         self.fontClock.LoadFont("./fonts/win_crox5h.bdf")
