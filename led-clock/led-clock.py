@@ -296,14 +296,18 @@ class RunText:
 
     def get_icon(self, icon_name):
         #https://yastatic.net/weather/i/icons/islands/32/
+        #https://yastatic.net/weather/i/icons/funky/png/dark/24/ovc_ts.png
         if icon_name in self.icons:
             return self.icons[icon_name]
         img_size = 8
         i8 = '../icons8/{0}_{1}.png'.format(icon_name, img_size)
+        i24 = '../icons/' + icon_name + '.png'
         if os.path.isfile(i8):
             i = Image.open(i8).resize((self.imgSize, self.imgSize), Image.HAMMING)
+        elif os.path.isfile(i8):
+            i = Image.open(i24).resize((self.imgSize, self.imgSize), Image.HAMMING)
         else:
-            i = Image.open('../icons/' + icon_name + '.png').resize((self.imgSize, self.imgSize), Image.HAMMING)
+            return self.get_icon('na')
         m = Image.new('RGB', i.size, "BLACK")
         m.paste(i, (0, 0), i)
         self.icons[icon_name] = m
