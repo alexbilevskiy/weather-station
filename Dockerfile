@@ -12,6 +12,7 @@ RUN apt-get install python3-dev cython3 --no-install-recommends -y
 WORKDIR /build
 RUN git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
 WORKDIR ./rpi-rgb-led-matrix
+RUN git checkout 9fbdeea555239daa19d2226f836b790387c0f2e6
 
 RUN make build-python PYTHON=$(which python3) CYTHON=$(which cython3) -j 8
 RUN make install-python PYTHON=$(command -v python3)
