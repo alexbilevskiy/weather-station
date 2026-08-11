@@ -1,11 +1,14 @@
 #!/usr/bin/python3 -B
 # coding: UTF-8
-import re
 
 import requests
 from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 from PIL import Image
-import time, datetime, json, textwrap, random, os, collections
+import time
+import datetime
+import json
+import random
+import os
 import paho.mqtt.client as mqtt
 
 class RunText:
@@ -15,12 +18,11 @@ class RunText:
         # p.cpu_affinity([3])
 
         with open('../config-clock.json') as f:
-            s = f.read()
-            self.config = json.loads(s)
+            self.config = json.load(f)
             self.elements = self.config["elements"]
 
-        self.map = collections.OrderedDict()
-        self.colors = collections.OrderedDict()
+        self.map = {}
+        self.colors = {}
 
         self.mqcl = None
         self.mqtt_root_topic = None
@@ -49,9 +51,9 @@ class RunText:
         self.rowH = self.fontRegH + 1
 
         self.userBrightness = None
-        self.custom_text = u""
-        self.sumulate_precip = ""
-        self.sumulate_precip_strength = 0
+        self.custom_text = ""
+        self.simulate_precip = ""
+        self.simulate_precip_strength = 0
         self.extra_dim = False
         self.raindrops = []
         self.snow_timer = time.time_ns() // 1000000
@@ -82,16 +84,15 @@ class RunText:
             self.canvas.Clear()
 
             now = time.time_ns() // 1000000
-            next = now + self.delay * 1000
+            next_tick = now + self.delay * 1000
             self.clock()
             new = time.time_ns() // 1000000
-            diff = next-new
+            diff = next_tick-new
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             if diff < 0:
                 if diff < -500:
-                    print("LAG " + str(abs(diff)) + "ms")
+                    print(f"LAG {abs(diff)}ms")
                 continue
-            # print("SLEEP " + str(diff) + "ms")
             time.sleep(diff / 1000)
 
     def clock(self):
@@ -100,11 +101,11 @@ class RunText:
 
         self.mqtt_loop()
         if self.mqtt_error:
-            graphics.DrawText(self.canvas, self.fontReg, 1, 28, self.get_color('clock'), u'MQTT ERROR')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 28, self.get_color('clock'), 'MQTT ERROR')
 
         hass = self.read_hass()
         if not hass:
-            graphics.DrawText(self.canvas, self.fontReg, 1, 36, self.get_color('clock'), u'NO HASS')
+            graphics.DrawText(self.canvas, self.fontReg, 1, 36, self.get_color('clock'), 'NO HASS')
             return
         self.define_brightness(now)
         self.draw_entities(now)
@@ -181,7 +182,7 @@ class RunText:
     def draw_co2(self, id):
         dev_co2 = self.get_hass_entity_by_device(self.elements[id]['sensors']['main'])
         if dev_co2 is not None:
-            text = u'{0}ppm'.format(int(float(dev_co2)))
+            text = f'{int(float(dev_co2))}ppm'
         else:
             text = 'N/A'
         width = self.calc_width(text, self.fontReg)
@@ -192,7 +193,7 @@ class RunText:
     def draw_humidity(self, id):
         dev_hum = self.get_hass_entity_by_device(self.elements[id]['sensors']['main'])
         if dev_hum is not None:
-            text = u'{0}%'.format(int(round(float(dev_hum), 0)))
+            text = f'{int(round(float(dev_hum), 0))}%'
         else:
             text = 'N/A'
         width = self.calc_width(text, self.fontReg)
@@ -216,7 +217,7 @@ class RunText:
         dev_wind_bearing = self.get_hass_entity_by_device(self.elements[id]['sensors']['bearing'])
         text = 'N/A'
         if dev_wind_bearing is not None and dev_wind_speed is not None:
-            text = u'{1} {0}m/s'.format(int(round(float(dev_wind_speed), 0)), WIND_DIRECTION_MAPPING[dev_wind_bearing])
+            text = f'{WIND_DIRECTION_MAPPING[dev_wind_bearing]} {int(round(float(dev_wind_speed), 0))}m/s'
 
         width = self.calc_width(text, self.fontReg)
         coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
@@ -227,7 +228,7 @@ class RunText:
         dev_temp_inside = self.get_hass_entity_by_device(self.elements[id]['sensors']['main'])
         text = 'N/A'
         if dev_temp_inside is not None:
-            text = u'{0}°'.format(round(float(dev_temp_inside), 1))
+            text = f'{round(float(dev_temp_inside), 1)}°'
 
         width = self.calc_width(text, self.fontReg)
         coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
@@ -247,7 +248,7 @@ class RunText:
 
         text = 'N/A'
         if dev_temp_outside is not None:
-            text = u'{0}°'.format(int(round(float(dev_temp_outside), 0)))
+            text = f'{int(round(float(dev_temp_outside), 0))}°'
 
         width = self.calc_width(text, self.fontReg)
         coords = self.get_coords_by_element(id, w=width, h=self.fontRegH, element=self.elements[id])
@@ -256,13 +257,12 @@ class RunText:
         dev_current_icon = self.get_hass_entity_by_device(self.elements[id]['sensors']['icon'])
         if dev_current_icon is None:
             return
-        coords = self.get_coords_by_element("{0}_icon".format(id), w=self.imgSize, h=self.imgSize, element=self.elements[id])
+        coords = self.get_coords_by_element(f"{id}_icon", w=self.imgSize, h=self.imgSize, element=self.elements[id])
         self.draw_image(self.get_icon(dev_current_icon), coords['x'], coords['y'])
 
     def draw_forecast(self, id):
         c = self.get_color(id)
         dev_forecast = self.get_hass_entity_by_device(self.elements[id]['sensors']['forecast'])
-
 
         weather_element = self.elements[id]
 
@@ -273,22 +273,22 @@ class RunText:
             icon2 = 'na'
         else:
             # access forecast objects starting from index 1, because first object (with index 0) is probably the current weather
-            fc1 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][1]['datetime']), int(round(dev_forecast['forecast'][1]['native_temperature'])))
-            fc2 = u'{0}{1}°'.format(self.format_day_time(dev_forecast['forecast'][2]['datetime']), int(round(dev_forecast['forecast'][2]['native_temperature'])))
+            fc1 = f"{self.format_day_time(dev_forecast['forecast'][1]['datetime'])}{int(round(dev_forecast['forecast'][1]['native_temperature']))}°"
+            fc2 = f"{self.format_day_time(dev_forecast['forecast'][2]['datetime'])}{int(round(dev_forecast['forecast'][2]['native_temperature']))}°"
             icon1 = dev_forecast['forecast_icons'][0]
             icon2 = dev_forecast['forecast_icons'][1]
 
-        coords = self.get_coords_by_element("{0}_row_1".format(id), w=self.calc_width(fc1, self.fontReg), h=self.fontRegH, element=weather_element)
+        coords = self.get_coords_by_element(f"{id}_row_1", w=self.calc_width(fc1, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc1)
 
-        coords = self.get_coords_by_element("{0}_row_1_icon".format(id), w=self.imgSize, h=self.imgSize, element=weather_element)
+        coords = self.get_coords_by_element(f"{id}_row_1_icon", w=self.imgSize, h=self.imgSize, element=weather_element)
         self.draw_image(self.get_icon(icon1), coords['x'], coords['y'])
 
         weather_element['row'] += 1
-        coords = self.get_coords_by_element("{0}_row_2".format(id), w=self.calc_width(fc2, self.fontReg), h=self.fontRegH, element=weather_element)
+        coords = self.get_coords_by_element(f"{id}_row_2", w=self.calc_width(fc2, self.fontReg), h=self.fontRegH, element=weather_element)
         graphics.DrawText(self.canvas, self.fontReg, coords['x'], coords['y'], c, fc2)
 
-        coords = self.get_coords_by_element("{0}_row_2_icon".format(id), w=self.imgSize, h=self.imgSize, element=weather_element)
+        coords = self.get_coords_by_element(f"{id}_row_2_icon", w=self.imgSize, h=self.imgSize, element=weather_element)
         self.draw_image(self.get_icon(icon2), coords['x'], coords['y'])
 
         # TODO: hack because weather_element is passed by reference (why?)
@@ -300,12 +300,12 @@ class RunText:
         if icon_name in self.icons:
             return self.icons[icon_name]
         img_size = 8
-        i8 = '../icons8/{0}_{1}.png'.format(icon_name, img_size)
-        i24 = '../icons/' + icon_name + '.png'
+        i8 = f'../icons8/{icon_name}_{img_size}.png'
+        i24 = f'../icons/{icon_name}.png'
         if os.path.isfile(i8):
-            i = Image.open(i8).resize((self.imgSize, self.imgSize), Image.HAMMING)
-        elif os.path.isfile(i8):
-            i = Image.open(i24).resize((self.imgSize, self.imgSize), Image.HAMMING)
+            i = Image.open(i8).resize((self.imgSize, self.imgSize), Image.Resampling.HAMMING)
+        elif os.path.isfile(i24):
+            i = Image.open(i24).resize((self.imgSize, self.imgSize), Image.Resampling.HAMMING)
         else:
             return self.get_icon('na')
         m = Image.new('RGB', i.size, "BLACK")
@@ -377,15 +377,15 @@ class RunText:
         if dev_wind_speed is not None:
             wind_speed = int(round(float(dev_wind_speed), 0))
 
-        if self.sumulate_precip != "":
-            if self.sumulate_precip == "rain":
+        if self.simulate_precip != "":
+            if self.simulate_precip == "rain":
                 prec_type = 1
-            elif self.sumulate_precip == "wet_snow":
+            elif self.simulate_precip == "wet_snow":
                 prec_type = 2
-            elif self.sumulate_precip == "snow":
+            elif self.simulate_precip == "snow":
                 prec_type = 3
 
-            prec_strength = self.sumulate_precip_strength
+            prec_strength = self.simulate_precip_strength
 
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             return
@@ -426,34 +426,31 @@ class RunText:
                 # impossible
                 return
             delay = 1 / speed
-            # print("{0}: {1}".format(drop_type, str(delay)))
-            # interval = self.ledH / (max_drops * speed)
             self.raindrops.append({'x': random.randint(min_x, self.ledW - 1), 'y': start_y, 'timer': time.time_ns() // 1000000, 'color': self.get_color_by_prec(drop_type), 'type': drop_type, 'delay': delay})
             self.snow_timer = now_micro
 
-        for i, f in enumerate(self.raindrops):
+        for i in range(len(self.raindrops) - 1, -1, -1):
+            f = self.raindrops[i]
             self.canvas.SetPixel(f['x'], f['y'], f['color'][0], f['color'][1], f['color'][2])
-            delta = now_micro - self.raindrops[i]['timer']
-            drop_delay = self.raindrops[i]['delay'] * 1000
+            delta = now_micro - f['timer']
+            drop_delay = f['delay'] * 1000
             if delta < drop_delay:
                 continue
             distance = int(round(delta / drop_delay))
-            # realSpeed = 1 / (now_micro - self.raindrops[i]['timer'])
-            # print('real speed: ' + str(realSpeed))
-            self.raindrops[i]['timer'] = now_micro
+            f['timer'] = now_micro
 
-            self.raindrops[i]['color'] = self.get_color_by_prec(self.raindrops[i]['type'])
-            if self.raindrops[i]['type'] == 'rain':
-                self.raindrops[i]['y'] += distance
-                self.raindrops[i]['x'] += 0 if horizontal_speed == 0 or self.raindrops[i]['y'] % horizontal_speed == 0 else 1
-            if self.raindrops[i]['type'] == 'wet_snow':
-                self.raindrops[i]['y'] += distance
-                self.raindrops[i]['x'] += random.randint(-1, 1)
-            if self.raindrops[i]['type'] == 'snow':
-                self.raindrops[i]['y'] += distance
-                self.raindrops[i]['x'] += random.randint(-1, 1)
+            f['color'] = self.get_color_by_prec(f['type'])
+            if f['type'] == 'rain':
+                f['y'] += distance
+                f['x'] += 0 if horizontal_speed == 0 or f['y'] % horizontal_speed == 0 else 1
+            elif f['type'] == 'wet_snow':
+                f['y'] += distance
+                f['x'] += random.randint(-1, 1)
+            elif f['type'] == 'snow':
+                f['y'] += distance
+                f['x'] += random.randint(-1, 1)
 
-            if self.raindrops[i]['y'] > self.ledH - 1:
+            if f['y'] > self.ledH - 1:
                 self.raindrops.pop(i)
 
     def get_coords(self, id, w, h):
@@ -473,7 +470,7 @@ class RunText:
         if align_y == 'top' and rowspan > 1 and self.rowH * rowspan > h:
             y -= self.rowH * rowspan - h
 
-        for mapId in (self.map if align_x == 'left' else self.map):
+        for mapId in self.map:
             if mapId == id:
                 break
             item = self.map[mapId]
@@ -502,22 +499,23 @@ class RunText:
         if prec_type == 'rain':
             return [0, random.randint(100, 150), random.randint(200, 255)]
         elif prec_type == 'wet_snow':
-                return [random.randint(100, 150), random.randint(100, 150), random.randint(100, 150)]
+            return [random.randint(100, 150), random.randint(100, 150), random.randint(100, 150)]
         elif prec_type == 'snow':
             c = random.randint(50, 255)
             return [c, c, c]
+        return [0, 0, 0]
 
     def get_color(self, id, type=None):
         key = id
         if type is not None:
-            key = key + ":" + type
+            key = f"{key}:{type}"
         if key in self.colors:
             return self.colors[key]
 
         elem = self.elements[id]
         color_key = "color"
         if type is not None:
-            color_key = type + "_color"
+            color_key = f"{type}_color"
         color_raw = elem[color_key]
 
         color = graphics.Color(self.c(color_raw[0]), self.c(color_raw[1]), self.c(color_raw[2]))
@@ -544,7 +542,6 @@ class RunText:
         time_str = time_str[:r_idx] + time_str[r_idx+1:]
 
         dt = datetime.datetime.strptime(time_str, '%Y-%m-%dT%H:%M:%S.%f%z')
-        # dt = datetime.date.fromisoformat(time_str)
         if dt.hour >= 18:
             return 'e'
         elif dt.hour >= 12:
@@ -619,19 +616,15 @@ class RunText:
         if self.hassUpdated + self.config['metrics_period'] > now:
             return self.hass
         try:
-            resp = requests.get(self.config['hass']['url'], headers={"Authorization": "Bearer {0}".format(self.config['hass']['token'])}, timeout=10)
+            resp = requests.get(self.config['hass']['url'], headers={"Authorization": f"Bearer {self.config['hass']['token']}"}, timeout=10)
         except Exception as e:
-            print("Cannot load hass: {0}".format(str(e)))
-
+            print(f"Cannot load hass: {e}")
             return None
-
-        if not resp:
-            return False
 
         try:
             hass = resp.json()
         except Exception as e:
-            print("Invalid hass states `{0}`: {1}".format(str(e), resp.text))
+            print(f"Invalid hass states `{e}`: {resp.text}")
             return None
 
         hass_assoc = {}
@@ -657,24 +650,24 @@ class RunText:
             "name": "LED Panel clock",
             "sw_version": "0.1.0",
         }
-        self.mqtt_root_topic = "led-clock/{0}".format(self.mqtt_device['identifiers'])
+        self.mqtt_root_topic = f"led-clock/{self.mqtt_device['identifiers']}"
 
         self.mqcl = mqtt.Client(self.config['mqtt']['device_id'])
         self.mqcl.enable_logger()
         self.mqcl.on_connect = self.mqtt_connect
         self.mqcl.on_disconnect = self.mqtt_disconnect
         self.mqcl.on_message = self.mqtt_message
-        self.mqcl.will_set("{0}/availability".format(self.mqtt_root_topic), payload=b"offline", retain=True)
+        self.mqcl.will_set(f"{self.mqtt_root_topic}/availability", payload=b"offline", retain=True)
         try:
             self.mqcl.connect(self.config['mqtt']['host'], self.config['mqtt']['port'], 60)
             self.mqtt_error = False
         except Exception as e:
-            print("Cannot connect to mqtt: {0}".format(str(e)))
+            print(f"Cannot connect to mqtt: {e}")
             self.mqtt_error = True
             self.mqcl = None
 
     def mqtt_connect(self, client, userdata, flags, rc):
-        print("mqtt connected with result code "+str(rc))
+        print(f"mqtt connected with result code {rc}")
         self.mqtt_discovery_brightness()
         self.mqtt_discovery_text()
         self.mqtt_discovery_simulate_precip()
@@ -685,46 +678,45 @@ class RunText:
         exit()
 
     def mqtt_message(self, client, userdata, msg):
-        # print('MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
-        if re.match('.+/brightness_set$', msg.topic):
+        if msg.topic.endswith('/brightness_set'):
             cmd = json.loads(msg.payload)
             if 'state' not in cmd:
-                print('MQTT BRIGHTNESS SET INVALID: ' + str(msg.payload))
+                print(f'MQTT BRIGHTNESS SET INVALID: {msg.payload}')
                 return
             if cmd['state'] == 'ON':
                 if 'brightness' in cmd:
                     self.userBrightness = cmd['brightness']
-                    print('set bri: ' + str(self.userBrightness))
+                    print(f'set bri: {self.userBrightness}')
                 else:
                     self.userBrightness = self.matrix.brightness
             else:
                 self.userBrightness = None
             self.report_brightness_state()
-        elif re.match('.+/text_set$', msg.topic):
-            print("MQTT TEXT SET " + str(msg.payload))
+        elif msg.topic.endswith('/text_set'):
+            print(f"MQTT TEXT SET {msg.payload}")
             self.custom_text = msg.payload.decode()
             self.report_text_state()
-        elif re.match('.+/precip_set$', msg.topic):
-            print("MQTT PRECIP SET " + str(msg.payload))
-            self.sumulate_precip = msg.payload.decode()
+        elif msg.topic.endswith('/precip_set'):
+            print(f"MQTT PRECIP SET {msg.payload}")
+            self.simulate_precip = msg.payload.decode()
             self.report_simulate_precip_state()
-        elif re.match('.+/precip_str_set$', msg.topic):
-            print("MQTT PRECIP STR SET " + str(msg.payload))
-            self.sumulate_precip_strength = float(msg.payload.decode())
+        elif msg.topic.endswith('/precip_str_set'):
+            print(f"MQTT PRECIP STR SET {msg.payload}")
+            self.simulate_precip_strength = float(msg.payload.decode())
             self.report_simulate_precip_strength_state()
         else:
-            print('UNKNOWN MQTT RECEIVED: ' + "\t" + str(msg.topic) + "\t" + str(msg.payload))
+            print(f'UNKNOWN MQTT RECEIVED: \t{msg.topic}\t{msg.payload}')
 
     def mqtt_discovery_brightness(self):
-        discovery_topic = "{0}/light/{1}-brightness/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/light/{self.mqtt_device['identifiers']}-brightness/config"
         service_config = {
             "name": "brightness",
-            "unique_id": "{0}-brightness".format(self.mqtt_device['identifiers']),
-            "object_id": "{0}-brightness".format(self.mqtt_device['identifiers']),
-            "command_topic": "{0}/brightness_set".format(self.mqtt_root_topic),
-            "state_topic": "{0}/brightness_state".format(self.mqtt_root_topic),
+            "unique_id": f"{self.mqtt_device['identifiers']}-brightness",
+            "object_id": f"{self.mqtt_device['identifiers']}-brightness",
+            "command_topic": f"{self.mqtt_root_topic}/brightness_set",
+            "state_topic": f"{self.mqtt_root_topic}/brightness_state",
             "availability": {
-                "topic": "{0}/availability".format(self.mqtt_root_topic)
+                "topic": f"{self.mqtt_root_topic}/availability"
             },
             "schema": "json",
             "icon": "mdi:clock-digital",
@@ -734,21 +726,21 @@ class RunText:
         }
         self.mqcl.subscribe(service_config['command_topic'])
         payload = json.dumps(service_config)
-        print('publish discovery light ' + payload)
+        print(f'publish discovery light {payload}')
         self.mqcl.publish(discovery_topic, payload=payload, retain=True)
         self.report_brightness_state()
-        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
 
     def mqtt_discovery_text(self):
-        discovery_topic = "{0}/text/{1}-text/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/text/{self.mqtt_device['identifiers']}-text/config"
         service_config = {
             "name": "text",
-            "unique_id": "{0}-text".format(self.mqtt_device['identifiers']),
-            "object_id": "{0}-text".format(self.mqtt_device['identifiers']),
-            "command_topic": "{0}/text_set".format(self.mqtt_root_topic),
-            "state_topic": "{0}/text_state".format(self.mqtt_root_topic),
+            "unique_id": f"{self.mqtt_device['identifiers']}-text",
+            "object_id": f"{self.mqtt_device['identifiers']}-text",
+            "command_topic": f"{self.mqtt_root_topic}/text_set",
+            "state_topic": f"{self.mqtt_root_topic}/text_state",
             "availability": {
-                "topic": "{0}/availability".format(self.mqtt_root_topic)
+                "topic": f"{self.mqtt_root_topic}/availability"
             },
             "schema": "json",
             "icon": "mdi:text-short",
@@ -756,21 +748,21 @@ class RunText:
         }
         self.mqcl.subscribe(service_config['command_topic'])
         payload = json.dumps(service_config)
-        print('publish discovery text ' + payload)
+        print(f'publish discovery text {payload}')
         self.mqcl.publish(discovery_topic, payload=payload, retain=True)
         self.report_text_state()
-        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
 
     def mqtt_discovery_simulate_precip(self):
-        discovery_topic = "{0}/select/{1}-simulate-precip/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/select/{self.mqtt_device['identifiers']}-simulate-precip/config"
         service_config = {
             "name": "simulate precipitation",
-            "unique_id": "{0}-simulate-precip".format(self.mqtt_device['identifiers']),
-            "object_id": "{0}-simulate-precip".format(self.mqtt_device['identifiers']),
-            "command_topic": "{0}/precip_set".format(self.mqtt_root_topic),
-            "state_topic": "{0}/precip_state".format(self.mqtt_root_topic),
+            "unique_id": f"{self.mqtt_device['identifiers']}-simulate-precip",
+            "object_id": f"{self.mqtt_device['identifiers']}-simulate-precip",
+            "command_topic": f"{self.mqtt_root_topic}/precip_set",
+            "state_topic": f"{self.mqtt_root_topic}/precip_state",
             "availability": {
-                "topic": "{0}/availability".format(self.mqtt_root_topic)
+                "topic": f"{self.mqtt_root_topic}/availability"
             },
             "options": [
                 "",
@@ -784,21 +776,21 @@ class RunText:
         }
         self.mqcl.subscribe(service_config['command_topic'])
         payload = json.dumps(service_config)
-        print('publish discovery precip ' + payload)
+        print(f'publish discovery precip {payload}')
         self.mqcl.publish(discovery_topic, payload=payload, retain=True)
         self.report_simulate_precip_state()
-        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
 
     def mqtt_discovery_simulate_precip_strength(self):
-        discovery_topic = "{0}/number/{1}-precip-strength/config".format(self.config['mqtt']['hass_discovery_prefix'], self.mqtt_device['identifiers'])
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/number/{self.mqtt_device['identifiers']}-precip-strength/config"
         service_config = {
             "name": "simulated precip strength",
-            "unique_id": "{0}-precip-strength".format(self.mqtt_device['identifiers']),
-            "object_id": "{0}-precip-strength".format(self.mqtt_device['identifiers']),
-            "command_topic": "{0}/precip_str_set".format(self.mqtt_root_topic),
-            "state_topic": "{0}/precip_str_state".format(self.mqtt_root_topic),
+            "unique_id": f"{self.mqtt_device['identifiers']}-precip-strength",
+            "object_id": f"{self.mqtt_device['identifiers']}-precip-strength",
+            "command_topic": f"{self.mqtt_root_topic}/precip_str_set",
+            "state_topic": f"{self.mqtt_root_topic}/precip_str_state",
             "availability": {
-                "topic": "{0}/availability".format(self.mqtt_root_topic)
+                "topic": f"{self.mqtt_root_topic}/availability"
             },
             "min": 0.0,
             "max": 5.0,
@@ -809,10 +801,10 @@ class RunText:
         }
         self.mqcl.subscribe(service_config['command_topic'])
         payload = json.dumps(service_config)
-        print('publish discovery precip strength ' + payload)
+        print(f'publish discovery precip strength {payload}')
         self.mqcl.publish(discovery_topic, payload=payload, retain=True)
         self.report_simulate_precip_strength_state()
-        self.mqcl.publish("{0}/availability".format(self.mqtt_root_topic), payload=b'online', retain=True)
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
 
     def report_brightness_state(self):
         if self.userBrightness:
@@ -820,23 +812,23 @@ class RunText:
         else:
             state = {"state": "OFF"}
         payload = json.dumps(state)
-        print('publish light state ' + payload)
-        self.mqcl.publish("{0}/brightness_state".format(self.mqtt_root_topic), payload=payload)
+        print(f'publish light state {payload}')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/brightness_state", payload=payload)
 
     def report_text_state(self):
         payload = self.custom_text
-        print('publish text state `{0}`'.format(payload))
-        self.mqcl.publish("{0}/text_state".format(self.mqtt_root_topic), payload=payload)
+        print(f'publish text state `{payload}`')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/text_state", payload=payload)
 
     def report_simulate_precip_state(self):
-        payload = self.sumulate_precip
-        print('publish precip state `{0}`'.format(payload))
-        self.mqcl.publish("{0}/precip_state".format(self.mqtt_root_topic), payload=payload)
+        payload = self.simulate_precip
+        print(f'publish precip state `{payload}`')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/precip_state", payload=payload)
 
     def report_simulate_precip_strength_state(self):
-        payload = self.sumulate_precip_strength
-        print('publish precip strength state `{0}`'.format(payload))
-        self.mqcl.publish("{0}/precip_str_state".format(self.mqtt_root_topic), payload=payload)
+        payload = self.simulate_precip_strength
+        print(f'publish precip strength state `{payload}`')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/precip_str_state", payload=payload)
 
 
 if __name__ == "__main__":
