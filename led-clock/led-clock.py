@@ -375,7 +375,7 @@ class RunText:
 
         dev_wind_speed = self.get_hass_entity_by_device(self.elements[id]['sensors']['wind_speed'])
         if dev_wind_speed is not None:
-            wind_speed = int(round(dev_wind_speed, 0))
+            wind_speed = int(round(float(dev_wind_speed), 0))
 
         if self.sumulate_precip != "":
             if self.sumulate_precip == "rain":
