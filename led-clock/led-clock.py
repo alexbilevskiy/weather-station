@@ -333,16 +333,16 @@ class RunText:
 
         sr = datetime.datetime.fromisoformat(dev_sun['next_rising'])
         ss = datetime.datetime.fromisoformat(dev_sun['next_setting'])
-        day_len = 0
         day = True
         if sr > ss:
-            #day
-            day_len = (ss-sr).total_seconds()+86400
-        elif sr < ss:
-            #night
+            #day: sun is up, next sunset before next sunrise
+            day_len = (ss - sr).total_seconds() + 86400
+            night_len = 86400 - day_len
+        else:
+            #night: sun is down, next sunrise before next sunset
             day = False
-            day_len = (ss-sr).total_seconds()
-        night_len = 86400 - day_len
+            night_len = (sr - ss).total_seconds() + 86400
+            day_len = 86400 - night_len
 
         if day:
             r=255
@@ -355,10 +355,13 @@ class RunText:
             b=150
             perc = 1 - (sr.timestamp() - cur_time.timestamp()) / night_len
 
-        dot = int(round(round(self.ledW * perc)))
+        dot = int(round(self.ledW * perc))
+        dot = max(0, min(self.ledW - 1, dot))
         self.canvas.SetPixel(dot, 0, r, g, b)
-        self.canvas.SetPixel(dot-1, 0, r, g, b)
-        self.canvas.SetPixel(dot+1, 0, r, g, b)
+        if dot > 0:
+            self.canvas.SetPixel(dot-1, 0, r, g, b)
+        if dot < self.ledW - 1:
+            self.canvas.SetPixel(dot+1, 0, r, g, b)
 
     def draw_precip(self, id):
         prec_type = None
@@ -388,6 +391,7 @@ class RunText:
             prec_strength = self.simulate_precip_strength
 
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
+            self.raindrops.clear()
             return
 
         max_drops = int(self.ledH * prec_strength)
@@ -397,10 +401,18 @@ class RunText:
         speed_wet_snow = 25
         if prec_type == 0: # no precipitation
             self.delay = 0.5
+            self.raindrops.clear()
             return
         self.delay = 0.02
 
-        interval = self.ledH / (max_drops * speed_snow)
+        if prec_type == 1:
+            spawn_speed = speed_rain
+        elif prec_type == 2:
+            spawn_speed = speed_wet_snow
+        else:
+            spawn_speed = speed_snow
+
+        interval = self.ledH / (max_drops * spawn_speed)
 
         horizontal_speed = int(wind_speed/2)
         if horizontal_speed > 0:
@@ -442,7 +454,8 @@ class RunText:
             f['color'] = self.get_color_by_prec(f['type'])
             if f['type'] == 'rain':
                 f['y'] += distance
-                f['x'] += 0 if horizontal_speed == 0 or f['y'] % horizontal_speed == 0 else 1
+                if horizontal_speed > 0 and f['y'] % horizontal_speed == 0:
+                    f['x'] += 1
             elif f['type'] == 'wet_snow':
                 f['y'] += distance
                 f['x'] += random.randint(-1, 1)
@@ -450,7 +463,7 @@ class RunText:
                 f['y'] += distance
                 f['x'] += random.randint(-1, 1)
 
-            if f['y'] > self.ledH - 1:
+            if f['y'] > self.ledH - 1 or f['x'] < 0 or f['x'] > self.ledW - 1:
                 self.raindrops.pop(i)
 
     def get_coords(self, id, w, h):
