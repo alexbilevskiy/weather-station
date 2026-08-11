@@ -54,6 +54,7 @@ class RunText:
         self.custom_text = ""
         self.simulate_precip = ""
         self.simulate_precip_strength = 0
+        self.simulate_wind_speed = 0
         self.extra_dim = False
         self.raindrops = []
         self.snow_timer = time.time_ns() // 1000000
@@ -389,12 +390,14 @@ class RunText:
                 prec_type = 3
 
             prec_strength = self.simulate_precip_strength
+            if self.simulate_wind_speed > 0:
+                wind_speed = self.simulate_wind_speed
 
         if prec_type is None or prec_strength is None or wind_speed is None or prec_strength == 0:
             self.raindrops.clear()
             return
 
-        max_drops = int(self.ledH * prec_strength)
+        max_drops = int(self.ledH * prec_strength * 0.5)
         min_x = 0
         speed_rain = 100 # pixels per second
         speed_snow = 15
@@ -414,8 +417,17 @@ class RunText:
 
         interval = self.ledH / (max_drops * spawn_speed)
 
-        horizontal_speed = int(wind_speed/2)
-        if horizontal_speed > 0:
+        if wind_speed == 0:
+            horizontal_step = 0
+            horizontal_every = 1
+        elif wind_speed <= 10:
+            horizontal_step = 1
+            horizontal_every = max(1, int(10 / wind_speed))
+        else:
+            horizontal_step = int(wind_speed / 10)
+            horizontal_every = 1
+
+        if horizontal_step > 0:
             min_x = - self.ledH
 
         now_micro = time.time_ns() // 1000000
@@ -454,8 +466,8 @@ class RunText:
             f['color'] = self.get_color_by_prec(f['type'])
             if f['type'] == 'rain':
                 f['y'] += distance
-                if horizontal_speed > 0 and f['y'] % horizontal_speed == 0:
-                    f['x'] += 1
+                if horizontal_step > 0 and f['y'] % horizontal_every == 0:
+                    f['x'] += horizontal_step
             elif f['type'] == 'wet_snow':
                 f['y'] += distance
                 f['x'] += random.randint(-1, 1)
@@ -685,6 +697,7 @@ class RunText:
         self.mqtt_discovery_text()
         self.mqtt_discovery_simulate_precip()
         self.mqtt_discovery_simulate_precip_strength()
+        self.mqtt_discovery_simulate_wind_speed()
 
     def mqtt_disconnect(self, client, userdata, rc):
         print("mqtt disconnected!!!")
@@ -717,6 +730,10 @@ class RunText:
             print(f"MQTT PRECIP STR SET {msg.payload}")
             self.simulate_precip_strength = float(msg.payload.decode())
             self.report_simulate_precip_strength_state()
+        elif msg.topic.endswith('/wind_set'):
+            print(f"MQTT WIND SET {msg.payload}")
+            self.simulate_wind_speed = float(msg.payload.decode())
+            self.report_simulate_wind_speed_state()
         else:
             print(f'UNKNOWN MQTT RECEIVED: \t{msg.topic}\t{msg.payload}')
 
@@ -806,7 +823,8 @@ class RunText:
                 "topic": f"{self.mqtt_root_topic}/availability"
             },
             "min": 0.0,
-            "max": 5.0,
+            "max": 2.0,
+            "step": 0.5,
             "mode": "slider",
             "schema": "json",
             "icon": "mdi:wind-power",
@@ -842,6 +860,37 @@ class RunText:
         payload = self.simulate_precip_strength
         print(f'publish precip strength state `{payload}`')
         self.mqcl.publish(f"{self.mqtt_root_topic}/precip_str_state", payload=payload)
+
+    def mqtt_discovery_simulate_wind_speed(self):
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/number/{self.mqtt_device['identifiers']}-wind-speed/config"
+        service_config = {
+            "name": "simulated wind speed",
+            "unique_id": f"{self.mqtt_device['identifiers']}-wind-speed",
+            "object_id": f"{self.mqtt_device['identifiers']}-wind-speed",
+            "command_topic": f"{self.mqtt_root_topic}/wind_set",
+            "state_topic": f"{self.mqtt_root_topic}/wind_state",
+            "availability": {
+                "topic": f"{self.mqtt_root_topic}/availability"
+            },
+            "min": 0.0,
+            "max": 30.0,
+            "step": 1.0,
+            "mode": "slider",
+            "schema": "json",
+            "icon": "mdi:weather-windy",
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print(f'publish discovery wind speed {payload}')
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_simulate_wind_speed_state()
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
+
+    def report_simulate_wind_speed_state(self):
+        payload = self.simulate_wind_speed
+        print(f'publish wind speed state `{payload}`')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/wind_state", payload=payload)
 
 
 if __name__ == "__main__":
