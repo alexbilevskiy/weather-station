@@ -398,7 +398,6 @@ class RunText:
             return
 
         max_drops = int(self.ledH * prec_strength * 0.5)
-        min_x = 0
         speed_rain = 100 # pixels per second
         speed_snow = 15
         speed_wet_snow = 25
@@ -427,12 +426,9 @@ class RunText:
             horizontal_step = int(wind_speed / 10)
             horizontal_every = 1
 
-        if horizontal_step > 0:
-            min_x = - self.ledH
-
         now_micro = time.time_ns() // 1000000
         if (len(self.raindrops) < max_drops) and (now_micro - self.snow_timer > interval * 1000):
-            start_y = 0
+            start_y = -1
             if prec_type == 1:
                 drop_type = 'rain'
                 speed = speed_rain
@@ -450,7 +446,7 @@ class RunText:
                 # impossible
                 return
             delay = 1 / speed
-            self.raindrops.append({'x': random.randint(min_x, self.ledW - 1), 'y': start_y, 'timer': time.time_ns() // 1000000, 'color': self.get_color_by_prec(drop_type), 'type': drop_type, 'delay': delay})
+            self.raindrops.append({'x': random.randint(0, self.ledW - 1), 'y': start_y, 'timer': time.time_ns() // 1000000, 'color': self.get_color_by_prec(drop_type), 'type': drop_type, 'delay': delay, 'h_accum': 0.0})
             self.snow_timer = now_micro
 
         for i in range(len(self.raindrops) - 1, -1, -1):
@@ -466,8 +462,11 @@ class RunText:
             f['color'] = self.get_color_by_prec(f['type'])
             if f['type'] == 'rain':
                 f['y'] += distance
-                if horizontal_step > 0 and f['y'] % horizontal_every == 0:
-                    f['x'] += horizontal_step
+                if horizontal_step > 0:
+                    f['h_accum'] += distance * horizontal_step / horizontal_every
+                    dx = int(f['h_accum'])
+                    f['x'] += dx
+                    f['h_accum'] -= dx
             elif f['type'] == 'wet_snow':
                 f['y'] += distance
                 f['x'] += random.randint(-1, 1)
@@ -475,8 +474,11 @@ class RunText:
                 f['y'] += distance
                 f['x'] += random.randint(-1, 1)
 
-            if f['y'] > self.ledH - 1 or f['x'] < 0 or f['x'] > self.ledW - 1:
+            if f['y'] > self.ledH - 1:
                 self.raindrops.pop(i)
+                continue
+
+            f['x'] = f['x'] % self.ledW
 
     def get_coords(self, id, w, h):
         return self.get_coords_by_element(id, w, h, self.elements[id])
