@@ -126,12 +126,19 @@
     "sky": {
       "type": "sky",
       "sensors": {
-        "sun_period": {
+        "sun_rising": {
           "id": "sun.sun",
-          "attrs": [
-            "next_rising",
-            "next_setting"
-          ]
+          "attr": "next_rising"
+        },
+        "sun_setting": {
+          "id": "sun.sun",
+          "attr": "next_setting"
+        },
+        "moon_rising": {
+          "id": "sensor.home_moon_rise"
+        },
+        "moon_setting": {
+          "id": "sensor.home_moon_set"
         }
       }
     },

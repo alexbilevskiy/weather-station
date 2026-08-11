@@ -9,6 +9,7 @@ import datetime
 import json
 import random
 import os
+import math
 import paho.mqtt.client as mqtt
 
 class RunText:
@@ -325,44 +326,84 @@ class RunText:
                     continue
                 self.canvas.SetPixel(x + pos_x, y + pos_y, self.c(r, 0.7), self.c(g, 0.7), self.c(b, 0.7))
 
+    def angle_to_border(self, angle):
+        cx, cy = (self.ledW - 1) / 2, (self.ledH - 1) / 2
+        hw, hh = cx, cy
+        rad = (angle + 180) * math.pi / 180
+        dx = math.cos(rad)
+        dy = math.sin(rad)
+        if abs(dx) < 1e-9:
+            x = cx
+            y = cy + hh if dy > 0 else cy - hh
+        elif abs(dy) < 1e-9:
+            x = cx + hw if dx > 0 else cx - hw
+            y = cy
+        else:
+            t = min(hw / abs(dx), hh / abs(dy))
+            x = cx + dx * t
+            y = cy + dy * t
+        return (int(round(x)), int(round(y)))
+
     def draw_sky(self, id):
-        dev_sun = self.get_hass_entity_by_device(self.elements[id]['sensors']['sun_period'])
-        if dev_sun is None:
+        sensors = self.elements[id]['sensors']
+        sr_val = self.get_hass_entity_by_device(sensors['sun_rising'])
+        ss_val = self.get_hass_entity_by_device(sensors['sun_setting'])
+        if sr_val is None or ss_val is None:
             return
 
-        cur_time = datetime.datetime.now()
+        sr = datetime.datetime.fromisoformat(sr_val)
+        ss = datetime.datetime.fromisoformat(ss_val)
+        cur_time = datetime.datetime.now(sr.tzinfo)
 
-        sr = datetime.datetime.fromisoformat(dev_sun['next_rising'])
-        ss = datetime.datetime.fromisoformat(dev_sun['next_setting'])
-        day = True
         if sr > ss:
-            #day: sun is up, next sunset before next sunrise
             day_len = (ss - sr).total_seconds() + 86400
-            night_len = 86400 - day_len
         else:
-            #night: sun is down, next sunrise before next sunset
-            day = False
-            night_len = (sr - ss).total_seconds() + 86400
-            day_len = 86400 - night_len
+            day_len = (ss - sr).total_seconds()
 
-        if day:
-            r=255
-            g=150
-            b=0
-            perc = (cur_time.timestamp() + 86400 - sr.timestamp()) / day_len
+        day_angle_span = day_len / 86400 * 360
+
+        last_sr = sr if sr < cur_time else sr - datetime.timedelta(seconds=86400)
+        sun_angle = (cur_time - last_sr).total_seconds() / 86400 * 360
+
+        for mark_angle in (0, day_angle_span):
+            for offset in (-0.5, 0.5):
+                ma = mark_angle + offset
+                mx, my = self.angle_to_border(ma)
+                self.canvas.SetPixel(mx, my, 100, 130, 200)
+
+        self.draw_sky_body(sun_angle, 255, 220, 0)
+
+        mr_val = self.get_hass_entity_by_device(sensors['moon_rising'])
+        ms_val = self.get_hass_entity_by_device(sensors['moon_setting'])
+        if mr_val is None or ms_val is None:
+            return
+
+        mr = datetime.datetime.fromisoformat(mr_val)
+        ms = datetime.datetime.fromisoformat(ms_val)
+
+        if mr > ms:
+            up_len = (ms - mr).total_seconds() + 86400
         else:
-            r=0
-            g=0
-            b=150
-            perc = 1 - (sr.timestamp() - cur_time.timestamp()) / night_len
+            up_len = (ms - mr).total_seconds()
 
-        dot = int(round(self.ledW * perc))
-        dot = max(0, min(self.ledW - 1, dot))
-        self.canvas.SetPixel(dot, 0, r, g, b)
-        if dot > 0:
-            self.canvas.SetPixel(dot-1, 0, r, g, b)
-        if dot < self.ledW - 1:
-            self.canvas.SetPixel(dot+1, 0, r, g, b)
+        up_angle_span = up_len / 86400 * 360
+
+        last_mr = mr if mr < cur_time else mr - datetime.timedelta(seconds=86400)
+        moon_angle = (cur_time - last_mr).total_seconds() / 86400 * 360
+
+        # for mark_angle in (0, up_angle_span):
+        #     for offset in (-0.5, 0.5):
+        #         ma = mark_angle + offset
+        #         mx, my = self.angle_to_border(ma)
+        #         self.canvas.SetPixel(mx, my, 100, 100, 130)
+
+        self.draw_sky_body(moon_angle, 180, 200, 255)
+
+    def draw_sky_body(self, angle, r, g, b):
+        for offset in (-1, 0, 1):
+            da = angle + offset
+            dx_, dy_ = self.angle_to_border(da)
+            self.canvas.SetPixel(dx_, dy_, r, g, b)
 
     def draw_precip(self, id):
         prec_type = None
