@@ -1,21 +1,29 @@
-FROM python:3.11-bookworm AS weather-station-base
+FROM python:3.12-bookworm AS rpi-rgb-led-matrix-build-env
 
 RUN apt-get update
-RUN apt-get install -y --no-install-recommends apt-utils build-essential git make
-
-RUN apt-get install -y ca-certificates
-
-RUN pip install requests psutil paho-mqtt==1.5 pillow
 
 RUN apt-get install python3-dev cython3 --no-install-recommends -y
 
-WORKDIR /build
-RUN git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
-WORKDIR ./rpi-rgb-led-matrix
-RUN git checkout 9fbdeea555239daa19d2226f836b790387c0f2e6
+RUN apt-get install -y --no-install-recommends git
 
-RUN make build-python PYTHON=$(which python3) CYTHON=$(which cython3) -j 8
-RUN make install-python PYTHON=$(command -v python3)
+FROM rpi-rgb-led-matrix-build-env as rpi-rgb-led-matrix
+
+RUN pip install -v pillow==12.3.0
+
+WORKDIR /build
+
+RUN git clone --depth 1 --branch 12.3.0 https://github.com/python-pillow/Pillow.git
+
+RUN git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
+WORKDIR /build/rpi-rgb-led-matrix
+RUN git checkout d7eef803089d49606c9a22170cbd8bd6c97dc2a3
+
+ENV CFLAGS="-I/build/Pillow/src/libImaging"
+RUN pip install -v .
+
+FROM rpi-rgb-led-matrix as weather-station-base
+
+RUN pip install -v requests psutil paho-mqtt==2.1.0
 
 FROM weather-station-base
 
