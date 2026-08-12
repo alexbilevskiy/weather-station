@@ -369,7 +369,7 @@ class RunText:
             for offset in (-0.5, 0.5):
                 ma = mark_angle + offset
                 mx, my = self.angle_to_border(ma)
-                self.canvas.SetPixel(mx, my, 100, 130, 200)
+                self.canvas.SetPixel(mx, my, 200, 60, 0)
 
         self.draw_sky_body(sun_angle, 255, 220, 0)
 
@@ -391,11 +391,11 @@ class RunText:
         last_mr = mr if mr < cur_time else mr - datetime.timedelta(seconds=86400)
         moon_angle = (cur_time - last_mr).total_seconds() / 86400 * 360
 
-        # for mark_angle in (0, up_angle_span):
-        #     for offset in (-0.5, 0.5):
-        #         ma = mark_angle + offset
-        #         mx, my = self.angle_to_border(ma)
-        #         self.canvas.SetPixel(mx, my, 100, 100, 130)
+        for mark_angle in (0, up_angle_span):
+            for offset in (-0.5, 0.5):
+                ma = mark_angle + offset
+                mx, my = self.angle_to_border(ma)
+                self.canvas.SetPixel(mx, my, 130, 130, 160)
 
         self.draw_sky_body(moon_angle, 180, 200, 255)
 
