@@ -400,10 +400,22 @@ class RunText:
         self.draw_sky_body(moon_angle, 180, 200, 255)
 
     def draw_sky_body(self, angle, r, g, b):
-        for offset in (-1, 0, 1):
-            da = angle + offset
-            dx_, dy_ = self.angle_to_border(da)
-            self.canvas.SetPixel(dx_, dy_, r, g, b)
+        cx, cy = self.angle_to_border(angle)
+        self.canvas.SetPixel(cx, cy, r, g, b)
+        for nx, ny in self.border_neighbors(cx, cy):
+            self.canvas.SetPixel(nx, ny, r, g, b)
+
+    def border_neighbors(self, x, y):
+        candidates = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+        result = []
+        for nx, ny in candidates:
+            if nx < 0 or nx >= self.ledW or ny < 0 or ny >= self.ledH:
+                continue
+            if nx == 0 or nx == self.ledW - 1 or ny == 0 or ny == self.ledH - 1:
+                result.append((nx, ny))
+        if len(result) >= 2:
+            return result[:2]
+        return result
 
     def draw_precip(self, id):
         prec_type = None
