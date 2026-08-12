@@ -720,7 +720,7 @@ class RunText:
         }
         self.mqtt_root_topic = f"led-clock/{self.mqtt_device['identifiers']}"
 
-        self.mqcl = mqtt.Client(self.config['mqtt']['device_id'])
+        self.mqcl = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, self.config['mqtt']['device_id'])
         self.mqcl.enable_logger()
         self.mqcl.on_connect = self.mqtt_connect
         self.mqcl.on_disconnect = self.mqtt_disconnect
@@ -734,15 +734,15 @@ class RunText:
             self.mqtt_error = True
             self.mqcl = None
 
-    def mqtt_connect(self, client, userdata, flags, rc):
-        print(f"mqtt connected with result code {rc}")
+    def mqtt_connect(self, client, userdata, flags, reason_code, properties):
+        print(f"mqtt connected with result code {reason_code}")
         self.mqtt_discovery_brightness()
         self.mqtt_discovery_text()
         self.mqtt_discovery_simulate_precip()
         self.mqtt_discovery_simulate_precip_strength()
         self.mqtt_discovery_simulate_wind_speed()
 
-    def mqtt_disconnect(self, client, userdata, rc):
+    def mqtt_disconnect(self, client, userdata, flags, reason_code, properties):
         print("mqtt disconnected!!!")
         exit()
 
