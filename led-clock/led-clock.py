@@ -36,6 +36,7 @@ class RunText:
         self.delay = 0.05
 
         self.debug_borders = self.config["debug_borders"]
+        self.debug_borders_override = None
 
         self.fontClock = graphics.Font()
         self.fontClock.LoadFont("./fonts/win_crox5h.bdf")
@@ -57,6 +58,9 @@ class RunText:
         self.simulate_precip_strength = 0
         self.simulate_wind_speed = 0
         self.extra_dim = False
+        self.rgb_light_on = False
+        self.rgb_light_color = [255, 255, 255]
+        self.rgb_light_brightness = 10
         self.raindrops = []
         self.snow_timer = time.time_ns() // 1000000
 
@@ -99,9 +103,19 @@ class RunText:
 
     def clock(self):
         now = datetime.datetime.now()
-        self.draw_clock('clock', now)
 
         self.mqtt_loop()
+
+        if self.rgb_light_on:
+            self.matrix.brightness = self.rgb_light_brightness
+            r, g, b = self.rgb_light_color
+            for x in range(self.ledW):
+                for y in range(self.ledH):
+                    self.canvas.SetPixel(x, y, r, g, b)
+            return
+
+        self.draw_clock('clock', now)
+
         if self.mqtt_error:
             graphics.DrawText(self.canvas, self.fontReg, 1, 28, self.get_color('clock'), 'MQTT ERROR')
 
@@ -564,7 +578,7 @@ class RunText:
         coords = {'id': id, 'x': x, 'y': y, 'w': w, 'h': h, 'a': align_x}
         self.map[id] = coords
 
-        if not self.debug_borders:
+        if not (self.debug_borders_override if self.debug_borders_override is not None else self.debug_borders):
             return coords
 
         c = graphics.Color(color[0], color[1], color[2])
@@ -753,6 +767,8 @@ class RunText:
         self.mqtt_discovery_simulate_precip()
         self.mqtt_discovery_simulate_precip_strength()
         self.mqtt_discovery_simulate_wind_speed()
+        self.mqtt_discovery_rgb_light()
+        self.mqtt_discovery_debug_borders()
 
     def mqtt_disconnect(self, client, userdata, flags, reason_code, properties):
         print("mqtt disconnected!!!")
@@ -789,6 +805,26 @@ class RunText:
             print(f"MQTT WIND SET {msg.payload}")
             self.simulate_wind_speed = float(msg.payload.decode())
             self.report_simulate_wind_speed_state()
+        elif msg.topic.endswith('/rgb_light_set'):
+            print(f"MQTT RGB LIGHT SET {msg.payload}")
+            cmd = json.loads(msg.payload)
+            if 'state' not in cmd:
+                print(f'MQTT RGB LIGHT SET INVALID: {msg.payload}')
+                return
+            if cmd['state'] == 'ON':
+                self.rgb_light_on = True
+                if 'color' in cmd:
+                    c = cmd['color']
+                    self.rgb_light_color = [c.get('r', 255), c.get('g', 255), c.get('b', 255)]
+                if 'brightness' in cmd:
+                    self.rgb_light_brightness = cmd['brightness']
+            else:
+                self.rgb_light_on = False
+            self.report_rgb_light_state()
+        elif msg.topic.endswith('/debug_borders_set'):
+            print(f"MQTT DEBUG BORDERS SET {msg.payload}")
+            self.debug_borders_override = msg.payload.decode() == 'ON'
+            self.report_debug_borders_state()
         else:
             print(f'UNKNOWN MQTT RECEIVED: \t{msg.topic}\t{msg.payload}')
 
@@ -946,6 +982,77 @@ class RunText:
         payload = self.simulate_wind_speed
         print(f'publish wind speed state `{payload}`')
         self.mqcl.publish(f"{self.mqtt_root_topic}/wind_state", payload=payload)
+
+    def mqtt_discovery_rgb_light(self):
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/light/{self.mqtt_device['identifiers']}-rgb-light/config"
+        service_config = {
+            "name": "rgb light",
+            "unique_id": f"{self.mqtt_device['identifiers']}-rgb-light",
+            "object_id": f"{self.mqtt_device['identifiers']}-rgb-light",
+            "command_topic": f"{self.mqtt_root_topic}/rgb_light_set",
+            "state_topic": f"{self.mqtt_root_topic}/rgb_light_state",
+            "availability": {
+                "topic": f"{self.mqtt_root_topic}/availability"
+            },
+            "schema": "json",
+            "icon": "mdi:lightbulb",
+            "brightness": True,
+            "brightness_scale": 100,
+            "color_mode": True,
+            "supported_color_modes": ["rgb"],
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print(f'publish discovery rgb light {payload}')
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_rgb_light_state()
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
+
+    def report_rgb_light_state(self):
+        if self.rgb_light_on:
+            state = {
+                "state": "ON",
+                "brightness": self.rgb_light_brightness,
+                "color_mode": "rgb",
+                "color": {
+                    "r": self.rgb_light_color[0],
+                    "g": self.rgb_light_color[1],
+                    "b": self.rgb_light_color[2],
+                }
+            }
+        else:
+            state = {"state": "OFF"}
+        payload = json.dumps(state)
+        print(f'publish rgb light state {payload}')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/rgb_light_state", payload=payload)
+
+    def mqtt_discovery_debug_borders(self):
+        discovery_topic = f"{self.config['mqtt']['hass_discovery_prefix']}/switch/{self.mqtt_device['identifiers']}-debug-borders/config"
+        service_config = {
+            "name": "debug borders",
+            "unique_id": f"{self.mqtt_device['identifiers']}-debug-borders",
+            "object_id": f"{self.mqtt_device['identifiers']}-debug-borders",
+            "command_topic": f"{self.mqtt_root_topic}/debug_borders_set",
+            "state_topic": f"{self.mqtt_root_topic}/debug_borders_state",
+            "availability": {
+                "topic": f"{self.mqtt_root_topic}/availability"
+            },
+            "icon": "mdi:border-all-variant",
+            "device": self.mqtt_device
+        }
+        self.mqcl.subscribe(service_config['command_topic'])
+        payload = json.dumps(service_config)
+        print(f'publish discovery debug borders {payload}')
+        self.mqcl.publish(discovery_topic, payload=payload, retain=True)
+        self.report_debug_borders_state()
+        self.mqcl.publish(f"{self.mqtt_root_topic}/availability", payload=b'online', retain=True)
+
+    def report_debug_borders_state(self):
+        active = self.debug_borders_override if self.debug_borders_override is not None else self.debug_borders
+        state = 'ON' if active else 'OFF'
+        print(f'publish debug borders state {state}')
+        self.mqcl.publish(f"{self.mqtt_root_topic}/debug_borders_state", payload=state)
 
 
 if __name__ == "__main__":
