@@ -20,6 +20,13 @@ if [[ existingBuildx == "" ]];
     docker buildx use ${BUILDX_NAME}
 fi
 
-docker buildx build --platform=linux/arm/v7 --progress=plain -t ${DOCKER_REGISTRY}/weather-station:latest --push .
+if [[ "$1" == "--base" ]];
+  then
+    echo "building base image..."
+    docker buildx build --platform=linux/arm/v7 --progress=plain -f Dockerfile.base -t ${DOCKER_REGISTRY}/weather-station-base:latest --push .
+  else
+    docker buildx build --platform=linux/arm/v7 --progress=plain --build-arg DOCKER_REGISTRY=${DOCKER_REGISTRY} -t ${DOCKER_REGISTRY}/weather-station:latest --push .
+fi
+
 docker buildx use default
 docker buildx stop ${BUILDX_NAME}

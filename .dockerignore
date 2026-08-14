@@ -1,3 +1,8 @@
 .idea
 config-clock.json
 .env
+.git
+screens
+Dockerfile
+Dockerfile.base
+dockerBuild.sh
