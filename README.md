@@ -1,5 +1,7 @@
 **LED Panel clock**  
 
+> **Note**: Project was [migrated](./esphome/esphome-migration-lvgl.md) to [esphome](https://github.com/alexbilevskiy/esphome-devices/blob/master/weather-station.md) and is now deprecated.
+
 Clock/weather station with [Home Assistant](https://www.home-assistant.io/) as data source and brightness control via mqtt
 
 https://github.com/alexbilevskiy/weather-station/assets/14160356/9c2a1ec7-3ff8-4a07-8c3b-b7440d52bc84
